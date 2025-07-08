@@ -27,6 +27,7 @@ function Login({ onLogin }) {
         return;
       }
       const data = await res.json();
+      console.log('Login response:', data); // Debug: log backend response
       onLogin(data);
       navigate('/home');
     } catch (err) {

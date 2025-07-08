@@ -13,7 +13,8 @@
   position: relative;
   overflow: hidden;
   background-color: white;
-}button {
+}
+button {
   padding: 8px 12px;
   cursor: pointer;
   border: none;
