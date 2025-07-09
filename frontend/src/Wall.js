@@ -83,15 +83,36 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
           return (
             <Rnd
               key={img.id}
-              default={{
-                x: img.x,
-                y: img.y,
-                width: img.width,
-                height: img.height,
+              size={{ width: img.width, height: img.height }}
+              position={{ x: img.x, y: img.y }}
+              onDragStop={(e, d) => {
+                setImages(prev =>
+                  prev.map(i =>
+                    i.id === img.id ? { ...i, x: d.x, y: d.y } : i
+                  )
+                );
+                console.log('Dragged image', img.id, 'to', d.x, d.y);
+              }}
+              onResizeStop={(e, direction, ref, delta, position) => {
+                setImages(prev =>
+                  prev.map(i =>
+                    i.id === img.id
+                      ? {
+                          ...i,
+                          width: parseInt(ref.style.width, 10),
+                          height: parseInt(ref.style.height, 10),
+                          x: position.x,
+                          y: position.y,
+                        }
+                      : i
+                  )
+                );
+                console.log('Resized image', img.id, 'to', ref.style.width, ref.style.height, 'at', position.x, position.y);
               }}
               bounds="parent"
               minWidth={50}
               minHeight={50}
+              disableDragging={img.locked}
             >
               <div
                 style={{
@@ -115,21 +136,35 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
                     : 'none',
                   outlineOffset: isPolygonShape && img.frame?.enabled ? '-2px' : undefined,
                 }}
-                onDoubleClick={() => handleSelectImage(img.id)}
+                onMouseDown={() => {
+                  handleSelectImage(img.id);
+                  setImages(prev =>
+                    prev.map(i =>
+                      i.id === img.id ? { ...i, locked: true } : i
+                    )
+                  );
+                }}
+                onDoubleClick={() => {
+                  setImages(prev =>
+                    prev.map(i =>
+                      i.id === img.id ? { ...i, locked: false } : i
+                    )
+                  );
+                }}
               >
-                                  <img
-                    src={img.src}
-                    alt="user-img"
-                    style={{
-                      width: `${img.zoom * 100}%`,
-                      height: `${img.zoom * 100}%`,
-                      objectFit: 'cover',
-                      border: selectedImgId === img.id ? '2px solid #2a509c' : 'none',
-                      boxShadow: 'none',
-                      borderRadius: img.shape === 'circle' ? '50%' : 8,
-                      transition: 'all 0.2s',
-                      ...maskStyle,
-                    }}
+                <img
+                  src={img.src}
+                  alt="user-img"
+                  style={{
+                    width: `${img.zoom * 100}%`,
+                    height: `${img.zoom * 100}%`,
+                    objectFit: 'cover',
+                    border: selectedImgId === img.id ? '2px solid #2a509c' : 'none',
+                    boxShadow: 'none',
+                    borderRadius: img.shape === 'circle' ? '50%' : 8,
+                    transition: 'all 0.2s',
+                    ...maskStyle,
+                  }}
                   onWheel={(e) => handleWheel(e, img.id)}
                 />
               </div>

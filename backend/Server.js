@@ -44,18 +44,19 @@ app.post('/api/register', (req, res) => {
   });
 });
 
-// Login endpoint
+// Login endpoint (returns userid and username)
 app.post('/api/login', (req, res) => {
   if (!req.body || typeof req.body !== 'object') {
     return res.status(400).json({ error: 'Invalid or missing JSON body' });
   }
   const { username, password } = req.body;
-  db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
+  db.query('SELECT id, username FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     if (results.length === 0) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
-    res.json({ username });
+    // Return userid and username
+    res.json({ userid: results[0].id, username: results[0].username });
   });
 });
 
@@ -64,6 +65,46 @@ app.get('/api/users', (req, res) => {
   db.query('SELECT username, password FROM users', (err, results) => {
     if (err) return res.status(500).json({ error: 'Database error' });
     res.json(results);
+  });
+});
+
+// Save or update a draft
+app.post('/api/drafts', (req, res) => {
+  const { userid, name, data, id } = req.body;
+  if (!userid || !name || !data) {
+    return res.status(400).json({ error: 'userid, name, and data are required' });
+  }
+  if (id) {
+    // Update existing draft
+    db.query('UPDATE drafts SET name = ?, data = ? WHERE id = ? AND userid = ?', [name, data, id, userid], (err, result) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json({ success: true, id });
+    });
+  } else {
+    // Insert new draft
+    db.query('INSERT INTO drafts (userid, name, data) VALUES (?, ?, ?)', [userid, name, data], (err, result) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json({ success: true, id: result.insertId });
+    });
+  }
+});
+
+// Get all drafts for a user
+app.get('/api/drafts', (req, res) => {
+  const { userid } = req.query;
+  if (!userid) return res.status(400).json({ error: 'userid is required' });
+  db.query('SELECT id, name, data, created_at FROM drafts WHERE userid = ?', [userid], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    res.json(results);
+  });
+});
+
+// Delete a draft
+app.delete('/api/drafts/:id', (req, res) => {
+  const { id } = req.params;
+  db.query('DELETE FROM drafts WHERE id = ?', [id], (err, result) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    res.json({ success: true });
   });
 });
 

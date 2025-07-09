@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import NavBar from './NavBar';
 import Wall from './Wall';
 import WallControls from './WallControls';
+import WallDrafts from './WallDrafts';
+import axios from 'axios';
 
 const defaultWalls = [
   '/walls/wall1.jpg',
@@ -120,6 +122,26 @@ function MainWall({ user, onLogout }) {
   else if (selectedType === 'color') wallBg = { type: 'color', value: selectedColor };
   else if (selectedType === 'upload') wallBg = { type: 'upload', value: uploadedWall };
 
+  // Compose wallState and setWallState for drafts
+  const wallState = {
+    selectedType,
+    selectedWall,
+    selectedColor,
+    uploadedWall,
+    width,
+    height,
+    wallImages,
+  };
+  const setWallState = (state) => {
+    setSelectedType(state.selectedType);
+    setSelectedWall(state.selectedWall);
+    setSelectedColor(state.selectedColor);
+    setUploadedWall(state.uploadedWall);
+    setWidth(state.width);
+    setHeight(state.height);
+    setWallImages(state.wallImages);
+  };
+
   // Main layout: NavBar, left (background), center (preview), right (controls)
   return (
     <>
@@ -163,7 +185,7 @@ function MainWall({ user, onLogout }) {
             )}
           </div>
         </div>
-        {/* Center: Wall preview and size controls (inline, since WallPreview was deleted) */}
+        {/* Center: Wall preview and size controls */}
         <div style={{ flex: 1, minWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
             background: '#fff', borderRadius: 24, boxShadow: '0 4px 32px #0002', padding: 32, marginTop: 32, marginBottom: 16,
@@ -192,6 +214,13 @@ function MainWall({ user, onLogout }) {
                 <input type="number" value={height} min={200} max={2000} onChange={e => setHeight(Number(e.target.value))} style={{ marginLeft: 4, width: 60, borderRadius: 4, border: '1px solid #bbb', padding: '2px 6px' }} />
               </label>
             </div>
+            {/* Drafts feature as a separate component */}
+            <WallDrafts
+              user={user}
+              wallState={wallState}
+              setWallState={setWallState}
+              defaultWalls={defaultWalls}
+            />
           </div>
         </div>
         {/* Right: Controls (color picker, upload, stickers, shape/frame, save/delete) */}
