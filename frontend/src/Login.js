@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function Login({ onLogin }) {
@@ -6,6 +6,14 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Only refresh the first time in this session
+    if (!window.sessionStorage.getItem('loginPageRefreshed')) {
+      window.sessionStorage.setItem('loginPageRefreshed', 'true');
+      window.location.reload();
+    }
+  }, []);
 
   // Handle login
   const handleLogin = async (e) => {
