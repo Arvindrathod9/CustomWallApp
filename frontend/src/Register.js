@@ -41,6 +41,8 @@ function Register({ onRegister }) {
       }
       const data = await res.json();
       if (onRegister) onRegister(data);
+      // Show alert message when account is created successfully
+      alert(`Account "${username}" created successfully! Welcome to Memory Wall!`);
       navigate('/home');
     } catch (err) {
       setError('Network error');

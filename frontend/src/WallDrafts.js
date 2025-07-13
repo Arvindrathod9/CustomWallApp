@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { toBase64 } from './MainWall';
 
 export default function WallDrafts({
   user,
   wallState,
   setWallState,
-  defaultWalls
+  defaultWalls,
+  currentDraftId,
+  setCurrentDraftId
 }) {
   const [showDrafts, setShowDrafts] = useState(false);
   const [drafts, setDrafts] = useState([]);
@@ -15,8 +18,9 @@ export default function WallDrafts({
     const res = await axios.get(`http://localhost:5000/api/drafts?userid=${userid}`);
     return res.data;
   };
-  const saveDraft = async (userid, name, data) => {
-    const res = await axios.post('http://localhost:5000/api/drafts', { userid, name, data });
+  const saveDraft = async (userid, name, data, id) => {
+    const payload = id ? { userid, name, data, id } : { userid, name, data };
+    const res = await axios.post('http://localhost:5000/api/drafts', payload);
     return res.data;
   };
   const deleteDraft = async (id) => {
@@ -25,9 +29,25 @@ export default function WallDrafts({
   };
 
   // Serialize wall state for drafts
-  const getWallDraftData = () => JSON.stringify(wallState);
+  const getWallDraftData = async () => {
+    // Deep copy wallState
+    const state = JSON.parse(JSON.stringify(wallState));
+    // Convert wall background to base64 if needed
+    if (state.selectedType === 'upload' && state.uploadedWall && !state.uploadedWall.startsWith('data:')) {
+      state.uploadedWall = await toBase64(state.uploadedWall);
+    }
+    // Convert all wallImages src to base64 if needed
+    if (Array.isArray(state.wallImages)) {
+      for (let img of state.wallImages) {
+        if (img.src && !img.src.startsWith('data:')) {
+          img.src = await toBase64(img.src);
+        }
+      }
+    }
+    return JSON.stringify(state);
+  };
   // Restore wall state from draft
-  const loadWallDraftData = (data) => {
+  const loadWallDraftData = (data, id) => {
     try {
       const d = JSON.parse(data);
       setWallState({
@@ -38,9 +58,11 @@ export default function WallDrafts({
         width: d.width || 800,
         height: d.height || 500,
         wallImages: d.wallImages || [],
+        draftId: id,
       });
+      setCurrentDraftId(id);
     } catch (e) {
-      alert('Failed to load draft');
+      console.error('Failed to load draft:', e);
     }
   };
 
@@ -57,13 +79,23 @@ export default function WallDrafts({
     <div style={{ marginTop: 16 }}>
       <div style={{ display: 'flex', gap: 12 }}>
         <button onClick={async () => {
-          // Always create a new draft with serial name
           const allDrafts = drafts.length ? drafts : await fetchDrafts(user.userid);
           setDrafts(allDrafts);
-          const name = getNextDraftName();
-          const wallData = getWallDraftData();
-          await saveDraft(user.userid, name, wallData);
-          alert('Draft saved as ' + name);
+          let name = getNextDraftName();
+          let id = null;
+          // If editing an existing draft, update it
+          if (currentDraftId != null) {
+            id = Number(currentDraftId);
+            const draft = allDrafts.find(d => d.id == id);
+            if (draft) {
+              name = draft.name;
+            }
+          }
+          const wallData = await getWallDraftData();
+          await saveDraft(user.userid, name, wallData, id);
+          console.log(id ? 'Draft updated.' : 'Draft saved as ' + name);
+          // Show alert message when draft is saved
+          alert(id ? `Draft "${name}" updated successfully!` : `Draft "${name}" saved successfully!`);
         }}>
           Save as Draft
         </button>
@@ -85,7 +117,7 @@ export default function WallDrafts({
                 <span><strong>{draft.name}</strong></span>
                 <span>
                   <button style={{ marginLeft: 8 }} onClick={() => {
-                    loadWallDraftData(draft.data);
+                    loadWallDraftData(draft.data, Number(draft.id));
                     setShowDrafts(false);
                   }}>
                     Load

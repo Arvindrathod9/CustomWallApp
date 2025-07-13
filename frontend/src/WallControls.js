@@ -2,6 +2,7 @@ import React from 'react';
 import { ChromePicker } from 'react-color';
 import FrameSelector from './FrameSelector';
 import StickerSelector from './StickerSelector';
+import { toBase64 } from './MainWall';
 
 /**
  * WallControls component for right-side controls: color picker, upload, stickers, shape/frame, save/delete.
@@ -29,10 +30,11 @@ function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, 
       </label>
       {/* StickerSelector for adding stickers */}
       <StickerSelector
-        onStickerSelect={(src) => {
+        onStickerSelect={async (src) => {
+          const base64 = await toBase64(src);
           const newSticker = {
             id: Date.now() + Math.random(),
-            src,
+            src: base64,
             x: 50,
             y: 50,
             width: 120,

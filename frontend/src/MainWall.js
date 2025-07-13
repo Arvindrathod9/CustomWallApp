@@ -55,20 +55,21 @@ function MainWall({ user, onLogout }) {
     setSelectedWall(null);
     setUploadedWall(null);
   };
-  const handleUpload = (e) => {
+  const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedType('upload');
-      setUploadedWall(URL.createObjectURL(file));
+      const base64 = await toBase64(file);
+      setUploadedWall(base64);
       setSelectedWall(null);
     }
   };
   // Wall image controls (for images placed on the wall)
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map((file, index) => ({
+    const newImages = await Promise.all(files.map(async (file, index) => ({
       id: Date.now() + index,
-      src: URL.createObjectURL(file),
+      src: await toBase64(file),
       x: 0,
       y: 0,
       width: 150,
@@ -76,7 +77,7 @@ function MainWall({ user, onLogout }) {
       shape: 'rectangle',
       zoom: 1,
       frame: { enabled: false, style: 'black', thickness: 6 },
-    }));
+    })));
     setWallImages((prev) => [...prev, ...newImages]);
   };
   const handleSelectShape = () => {
@@ -244,6 +245,29 @@ function MainWall({ user, onLogout }) {
       </div>
     </>
   );
+}
+
+// Utility to convert File or URL to base64 data URL
+export async function toBase64(fileOrUrl) {
+  if (typeof fileOrUrl === 'string' && fileOrUrl.startsWith('data:')) return fileOrUrl;
+  if (typeof fileOrUrl === 'string') {
+    // Fetch and convert URL to base64
+    const res = await fetch(fileOrUrl);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  // File object
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(fileOrUrl);
+  });
 }
 
 export default MainWall; 
