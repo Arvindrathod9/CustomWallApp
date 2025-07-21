@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { toBase64 } from './MainWall';
+import { useNavigate } from 'react-router-dom';
 
 export default function WallDrafts({
   user,
@@ -12,19 +13,31 @@ export default function WallDrafts({
 }) {
   const [showDrafts, setShowDrafts] = useState(false);
   const [drafts, setDrafts] = useState([]);
+  const [isPublic, setIsPublic] = useState(true); // Default to public
+  const [shareLink, setShareLink] = useState('');
+  const navigate = useNavigate();
 
   // API helpers
   const fetchDrafts = async (userid) => {
-    const res = await axios.get(`http://localhost:5000/api/drafts?userid=${userid}`);
+    const token = localStorage.getItem('token');
+    const res = await axios.get(`http://localhost:5000/api/drafts?userid=${userid}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return res.data;
   };
-  const saveDraft = async (userid, name, data, id) => {
-    const payload = id ? { userid, name, data, id } : { userid, name, data };
-    const res = await axios.post('http://localhost:5000/api/drafts', payload);
+  const saveDraft = async (userid, name, data, id, isPublicVal) => {
+    const token = localStorage.getItem('token');
+    const payload = id ? { userid, name, data, id, public: isPublicVal } : { userid, name, data, public: isPublicVal };
+    const res = await axios.post('http://localhost:5000/api/drafts', payload, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return res.data;
   };
   const deleteDraft = async (id) => {
-    const res = await axios.delete(`http://localhost:5000/api/drafts/${id}`);
+    const token = localStorage.getItem('token');
+    const res = await axios.delete(`http://localhost:5000/api/drafts/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return res.data;
   };
 
@@ -50,6 +63,7 @@ export default function WallDrafts({
   const loadWallDraftData = (data, id) => {
     try {
       const d = JSON.parse(data);
+      console.log('Loaded draft data:', d); // Debug log
       setWallState({
         selectedType: d.selectedType || 'image',
         selectedWall: d.selectedWall || defaultWalls[0],
@@ -75,64 +89,111 @@ export default function WallDrafts({
     return String(max + 1);
   };
 
+  // Handle share link copy
+  const handleCopyLink = (id) => {
+    const url = `${window.location.origin}/wall/draft/${id}`;
+    navigator.clipboard.writeText(url);
+    setShareLink(url);
+    alert('Share link copied to clipboard!');
+  };
+
   return (
     <div style={{ marginTop: 16 }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        {/* Hide the toggle, always public for now */}
+        <span style={{ fontWeight: 'bold', color: '#bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>This wall is <span style={{ color: '#1e7b2a' }}>Public</span> and shareable</span>
+        {currentDraftId && (
+          <button
+            style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', marginLeft: 8, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+            onClick={() => handleCopyLink(currentDraftId)}
+          >
+            Copy Share Link
+          </button>
+        )}
+        {currentDraftId && shareLink && (
+          <span style={{ marginLeft: 8, color: '#2a509c', fontSize: 13 }}>{shareLink}</span>
+        )}
+      </div>
       <div style={{ display: 'flex', gap: 12 }}>
+        {/* Save as New Draft button: only show if not editing an existing draft */}
+        {!currentDraftId && (
         <button onClick={async () => {
           const allDrafts = drafts.length ? drafts : await fetchDrafts(user.userid);
           setDrafts(allDrafts);
           let name = getNextDraftName();
-          let id = null;
-          // If editing an existing draft, update it
-          if (currentDraftId != null) {
-            id = Number(currentDraftId);
+          let publicVal = true; // Always public
+            const wallData = await getWallDraftData();
+            const result = await saveDraft(user.userid, name, wallData, null, publicVal);
+            alert(`Draft "${name}" saved successfully!`);
+            // Do NOT setCurrentDraftId here, so further saves are always new drafts
+            if (result && result.id) navigate(`/wall/draft/${result.id}`);
+          }}
+          style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+        >
+            Save as New Draft
+        </button>
+        )}
+        {/* Update Draft button: only show if editing an existing draft */}
+        {currentDraftId && (
+          <button onClick={async () => {
+            const allDrafts = drafts.length ? drafts : await fetchDrafts(user.userid);
+            setDrafts(allDrafts);
+            let id = Number(currentDraftId);
+            let name = 'Draft';
+            let publicVal = true;
             const draft = allDrafts.find(d => d.id == id);
             if (draft) {
               name = draft.name;
-            }
+              publicVal = true;
           }
           const wallData = await getWallDraftData();
-          await saveDraft(user.userid, name, wallData, id);
-          console.log(id ? 'Draft updated.' : 'Draft saved as ' + name);
-          // Show alert message when draft is saved
-          alert(id ? `Draft "${name}" updated successfully!` : `Draft "${name}" saved successfully!`);
-        }}>
-          Save as Draft
+          const result = await saveDraft(user.userid, name, wallData, id, publicVal);
+            alert(`Draft "${name}" updated successfully!`);
+            if (id) navigate(`/wall/draft/${id}`);
+        }}
+          style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+        >
+            Update Draft
         </button>
+        )}
         <button onClick={async () => {
-          const drafts = await fetchDrafts(user.userid);
-          setDrafts(drafts);
-          setShowDrafts(true);
-        }}>
-          Drafts
+          // Instead of showing drafts in the panel, navigate to the Drafts page
+          navigate('/drafts');
+        }}
+          style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+        >
+          Load Drafts
         </button>
+        {currentDraftId && (
+          <button onClick={async () => {
+            await deleteDraft(currentDraftId);
+            setCurrentDraftId(null);
+            alert('Draft deleted');
+          }}
+            style={{ background: '#e53935', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #e5393533', cursor: 'pointer' }}
+          >
+            Delete Draft
+          </button>
+        )}
       </div>
+      {/* List drafts for loading */}
       {showDrafts && (
-        <div style={{ background: '#fff', border: '1px solid #ccc', padding: 16, marginTop: 8, borderRadius: 10, minWidth: 320 }}>
-          <h3>Your Drafts</h3>
-          {drafts.length === 0 && <div>No drafts found.</div>}
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {drafts.map(draft => (
-              <li key={draft.id} style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span><strong>{draft.name}</strong></span>
-                <span>
-                  <button style={{ marginLeft: 8 }} onClick={() => {
-                    loadWallDraftData(draft.data, Number(draft.id));
-                    setShowDrafts(false);
-                  }}>
-                    Load
-                  </button>
-                  <button style={{ marginLeft: 8, color: 'red' }} onClick={async () => {
-                    await deleteDraft(draft.id);
-                    setDrafts(drafts.filter(d => d.id !== draft.id));
-                  }}>
-                    Remove
-                  </button>
-                </span>
+        <div style={{ marginTop: 16 }}>
+          <h4>Drafts</h4>
+          <ul>
+            {drafts.map(d => (
+              <li key={d.id} style={{ marginBottom: 8 }}>
+                <button onClick={() => {
+                  loadWallDraftData(d.data, d.id);
+                  navigate(`/wall/draft/${d.id}`);
+                }} style={{ marginRight: 8, background: '#bfa16c', color: 'white', borderRadius: 18, padding: '6px 18px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 15, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}>
+                  Load Draft {d.name}
+                </button>
+                <span style={{ color: '#2a509c', fontWeight: 'bold' }}>Public</span>
+                <button style={{ marginLeft: 8, background: '#bfa16c', color: 'white', borderRadius: 18, padding: '6px 18px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 15, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }} onClick={() => handleCopyLink(d.id)}>Copy Link</button>
               </li>
             ))}
           </ul>
-          <button onClick={() => setShowDrafts(false)} style={{ marginTop: 8 }}>Close</button>
         </div>
       )}
     </div>

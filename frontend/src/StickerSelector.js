@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // List of sticker image paths (should be placed in public/stickers/)
 const STICKERS = [
@@ -23,34 +24,39 @@ const StickerSelector = ({ onStickerSelect }) => {
     <div style={{ marginTop: 8, textAlign: 'center' }}>
       <button
         style={{
-          background: '#2a509c',
+          background: '#bfa16c',
           color: 'white',
           fontWeight: 'bold',
           padding: '10px 24px',
-          borderRadius: 6,
+          borderRadius: 18,
           fontSize: 18,
           width: 200,
-          boxShadow: '0 1px 6px #0002',
+          boxShadow: '0 1px 6px #bfa16c33',
           border: 'none',
           cursor: 'pointer',
-          marginBottom: 8
+          marginBottom: 8,
+          fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif'
         }}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          console.log('Choose Sticker button clicked'); // Debug log
+          setOpen(true);
+        }}
       >
         Choose Sticker
       </button>
-      {open && (
+      {open && createPortal(
         <div style={{
-          position: 'fixed',
+          position: 'absolute',
           left: 0,
           top: 0,
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          height: '100%',
           background: 'rgba(0,0,0,0.4)',
-          zIndex: 1000,
+          zIndex: 10001,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          pointerEvents: 'auto',
         }}
           onClick={() => setOpen(false)}
         >
@@ -110,7 +116,8 @@ const StickerSelector = ({ onStickerSelect }) => {
               />
             ))}
           </div>
-        </div>
+        </div>,
+        document.getElementById('wall-modal-root')
       )}
     </div>
   );

@@ -10,10 +10,10 @@ import { toBase64 } from './MainWall';
  */
 function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, handleColorChange, handleImageUpload, handleSelectShape, selectedImgId, wallImages, handleToggleFrame, handleFrameChange, handleSaveWall, handleDeleteSelected, setWallImages, setSelectedImgId, setShowShapeSelector }) {
   return (
-    <div style={{ minWidth: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, marginTop: 40, background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px #0001', padding: '24px 18px' }}>
+    <div style={{ minWidth: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, marginTop: 40, background: 'rgba(255,255,255,0.55)', borderRadius: 18, boxShadow: '0 2px 16px #bfa16c11', padding: '24px 18px', backdropFilter: 'blur(6px)' }}>
       {/* Background color picker toggle */}
       <button
-        style={{ background: '#2a509c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 6, fontSize: 18, width: 200, marginBottom: 8, boxShadow: '0 1px 6px #0002' }}
+        style={{ background: '#bfa16c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 18, fontSize: 18, width: 200, marginBottom: 8, boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', cursor: 'pointer' }}
         onClick={handleColorButtonClick}
       >
         Choose Background Color
@@ -25,7 +25,7 @@ function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, 
       )}
       {/* Upload image to wall */}
       <input type="file" accept="image/*" multiple id="upload-wall-img" style={{ display: 'none' }} onChange={handleImageUpload} />
-      <label htmlFor="upload-wall-img" style={{ background: '#2a509c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 6, fontSize: 18, width: 200, textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 6px #0002' }}>
+      <label htmlFor="upload-wall-img" style={{ background: '#bfa16c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 18, fontSize: 18, width: 200, textAlign: 'center', cursor: 'pointer', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>
         Upload Image
       </label>
       {/* StickerSelector for adding stickers */}
@@ -49,7 +49,7 @@ function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, 
       />
       {/* Shape selector button */}
       <button
-        style={{ background: '#2a509c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 6, fontSize: 18, width: 200, opacity: selectedImgId ? 1 : 0.5, cursor: selectedImgId ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #0002' }}
+        style={{ background: '#bfa16c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 18, fontSize: 18, width: 200, opacity: selectedImgId ? 1 : 0.5, cursor: selectedImgId ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}
         onClick={handleSelectShape}
         disabled={!selectedImgId}
       >
@@ -57,7 +57,7 @@ function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, 
       </button>
       {/* Frame toggle and selector */}
       <button
-        style={{ background: '#2a509c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 6, fontSize: 18, width: 200, opacity: selectedImgId ? 1 : 0.5, cursor: selectedImgId ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #0002' }}
+        style={{ background: '#bfa16c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 18, fontSize: 18, width: 200, opacity: selectedImgId ? 1 : 0.5, cursor: selectedImgId ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}
         onClick={handleToggleFrame}
         disabled={!selectedImgId}
       >
@@ -71,13 +71,13 @@ function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, 
       )}
       {/* Save and delete buttons */}
       <button
-        style={{ background: '#2a509c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 6, fontSize: 18, width: 200, boxShadow: '0 1px 6px #0002' }}
+        style={{ background: '#bfa16c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 18, fontSize: 18, width: 200, boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', cursor: 'pointer' }}
         onClick={handleSaveWall}
       >
         Save Wall
       </button>
       <button
-        style={{ background: '#2a509c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 6, fontSize: 18, width: 200, boxShadow: '0 1px 6px #0002' }}
+        style={{ background: '#bfa16c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 18, fontSize: 18, width: 200, boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', cursor: 'pointer' }}
         onClick={handleDeleteSelected}
       >
         Delete Selected Image

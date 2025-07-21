@@ -4,7 +4,7 @@ import NavBar from './NavBar';
 import Wall from './Wall';
 import WallControls from './WallControls';
 import WallDrafts from './WallDrafts';
-import axios from 'axios';
+import ProfilePanel from './ProfilePanel';
 
 const defaultWalls = [
   '/walls/wall1.jpg',
@@ -19,7 +19,7 @@ const defaultWalls = [
  * MainWall is the main layout for the memory wall app.
  * It manages all state and handlers, and composes the UI from subcomponents.
  */
-function MainWall({ user, onLogout }) {
+function MainWall({ user, onLogout, onUserUpdate }) {
   const navigate = useNavigate();
   // Wall background state
   const [selectedType, setSelectedType] = useState('image');
@@ -34,11 +34,29 @@ function MainWall({ user, onLogout }) {
   const [selectedImgId, setSelectedImgId] = useState(null);
   const [showShapeSelector, setShowShapeSelector] = useState(false);
   const [wallImages, setWallImages] = useState([]);
+  const [currentDraftId, setCurrentDraftId] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   // Handle logout
   const handleLogout = () => {
-    onLogout();
-    navigate('/');
+    setTimeout(() => onLogout(), 0);
+  };
+
+  // Handle profile panel
+  const handleProfileClick = () => {
+    setShowProfile(true);
+  };
+
+  // Handle profile close
+  const handleProfileClose = () => {
+    setShowProfile(false);
+  };
+
+  // Handle user update
+  const handleUserUpdate = (updatedUser) => {
+    if (onUserUpdate) {
+      onUserUpdate(updatedUser);
+    }
   };
   // Handle wall background selection
   const handleWallClick = (wall) => {
@@ -141,18 +159,33 @@ function MainWall({ user, onLogout }) {
     setWidth(state.width);
     setHeight(state.height);
     setWallImages(state.wallImages);
+    // Handle draft ID if present
+    if (state.draftId !== undefined) {
+      setCurrentDraftId(state.draftId);
+    }
   };
 
   // Main layout: NavBar, left (background), center (preview), right (controls)
   return (
     <>
       {/* Top navigation bar */}
-      <NavBar user={user} onLogout={handleLogout} />
-      <div className="main-layout" style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', minHeight: '100vh', gap: 40, background: '#e0f2ff' }}>
-        {/* Left: Wall background selection (inline, since WallBackgroundSelector was deleted) */}
+      <NavBar user={user} onLogout={handleLogout} onProfileClick={handleProfileClick} />
+      <div className="main-layout" style={{
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        gap: 40,
+        backgroundImage: 'url(/home.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif'
+      }}>
+        {/* Left: Wall background selection */}
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120, marginTop: 40, gap: 24,
-          background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px #0001', padding: '24px 12px',
+          background: 'rgba(255,255,255,0.55)', borderRadius: 18, boxShadow: '0 2px 16px #bfa16c11', padding: '24px 12px', backdropFilter: 'blur(6px)'
         }}>
           {/* Preset wall backgrounds */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
@@ -178,7 +211,7 @@ function MainWall({ user, onLogout }) {
           {/* Upload custom wall background */}
           <div style={{ marginTop: 16 }}>
             <input type="file" accept="image/*" onChange={handleUpload} id="wall-upload" style={{ display: 'none' }} />
-            <label htmlFor="wall-upload" style={{ background: '#2a509c', color: 'white', padding: '6px 16px', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 1px 6px #0002' }}>
+            <label htmlFor="wall-upload" style={{ background: '#bfa16c', color: 'white', padding: '6px 16px', borderRadius: 18, cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>
               Upload Wall
             </label>
             {uploadedWall && (
@@ -189,7 +222,7 @@ function MainWall({ user, onLogout }) {
         {/* Center: Wall preview and size controls */}
         <div style={{ flex: 1, minWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
-            background: '#fff', borderRadius: 24, boxShadow: '0 4px 32px #0002', padding: 32, marginTop: 32, marginBottom: 16,
+            background: 'rgba(255,255,255,0.55)', borderRadius: 24, boxShadow: '0 4px 32px #bfa16c22', padding: 32, marginTop: 32, marginBottom: 16, backdropFilter: 'blur(8px)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', width: 'fit-content',
           }}>
             {/* Wall preview */}
@@ -221,6 +254,8 @@ function MainWall({ user, onLogout }) {
               wallState={wallState}
               setWallState={setWallState}
               defaultWalls={defaultWalls}
+              currentDraftId={currentDraftId}
+              setCurrentDraftId={setCurrentDraftId}
             />
           </div>
         </div>
@@ -243,6 +278,29 @@ function MainWall({ user, onLogout }) {
           setShowShapeSelector={setShowShapeSelector}
         />
       </div>
+
+      {/* Profile Panel */}
+      <ProfilePanel
+        user={user}
+        isOpen={showProfile}
+        onClose={handleProfileClose}
+        onUpdateUser={handleUserUpdate}
+      />
+
+      {/* Overlay to close profile when clicking outside */}
+      {showProfile && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: '50%',
+            width: '50%',
+            height: '100vh',
+            zIndex: 999
+          }}
+          onClick={handleProfileClose}
+        />
+      )}
     </>
   );
 }

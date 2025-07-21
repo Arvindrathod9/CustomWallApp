@@ -1,53 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function Register({ onRegister }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [country, setCountry] = useState('');
   const [error, setError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
+  const [localUser, setLocalUser] = useState(null);
 
   // Handle create account
   const handleCreateAccount = async (e) => {
     e.preventDefault();
     setError('');
-    if (!username || !password || !confirmPassword) {
+    setIsCreating(true);
+    
+    if (!username || !password || !confirmPassword || !name || !email || !country) {
       setError('Please fill in all fields');
+      setIsCreating(false);
       return;
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      setIsCreating(false);
       return;
     }
     if (password.length < 1) {
       setError('Password must be at least 1 character long');
+      setIsCreating(false);
       return;
     }
     if (password.length > 8) {
       setError('Password must be at most 8 characters long');
+      setIsCreating(false);
       return;
     }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      setIsCreating(false);
+      return;
+    }
+    
     try {
       const res = await fetch('http://localhost:5000/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password, name, email, country })
       });
+      
       if (!res.ok) {
         const data = await res.json();
         setError(data.error || 'Registration failed');
+        setIsCreating(false);
         return;
       }
+      
       const data = await res.json();
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
       if (onRegister) onRegister(data);
-      // Show alert message when account is created successfully
+      setLocalUser(data); // Set local user state for redirect
       alert(`Account "${username}" created successfully! Welcome to Memory Wall!`);
-      navigate('/home');
+      // navigate('/wall'); // Remove this, let useEffect handle redirect
     } catch (err) {
       setError('Network error');
+      setIsCreating(false);
     }
   };
+
+  // After successful registration
+  useEffect(() => {
+    if (localUser) {
+      const pendingDraftId = localStorage.getItem('pendingDraftId');
+      console.log('pendingDraftId after registration:', pendingDraftId);
+      if (pendingDraftId) {
+        localStorage.removeItem('pendingDraftId');
+        navigate(`/shared/${pendingDraftId}`); // Fixed route to match SharedWall.js
+      } else {
+        navigate('/wall'); // or your default dashboard
+      }
+    }
+  }, [localUser, navigate]);
 
   return (
     <div style={{
@@ -169,6 +210,87 @@ function Register({ onRegister }) {
             />
           </div>
 
+          <div>
+            <label style={{
+              display: 'block',
+              textAlign: 'left',
+              marginBottom: 8,
+              fontWeight: 'bold',
+              color: '#333'
+            }}>
+              Full Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '2px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                transition: 'border-color 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <div>
+            <label style={{
+              display: 'block',
+              textAlign: 'left',
+              marginBottom: 8,
+              fontWeight: 'bold',
+              color: '#333'
+            }}>
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '2px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                transition: 'border-color 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+              placeholder="Enter your email address"
+            />
+          </div>
+
+          <div>
+            <label style={{
+              display: 'block',
+              textAlign: 'left',
+              marginBottom: 8,
+              fontWeight: 'bold',
+              color: '#333'
+            }}>
+              Country
+            </label>
+            <input
+              type="text"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '2px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                transition: 'border-color 0.3s ease',
+                boxSizing: 'border-box'
+              }}
+              placeholder="Enter your country"
+            />
+          </div>
+
           {error && (
             <div style={{
               background: '#ffebee',
@@ -184,20 +306,22 @@ function Register({ onRegister }) {
 
           <button
             type="submit"
+            disabled={isCreating}
             style={{
-              background: '#2a509c',
+              background: isCreating ? '#cccccc' : '#2a509c',
               color: 'white',
               fontWeight: 'bold',
               padding: '14px 24px',
               borderRadius: 8,
               fontSize: 16,
               border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(42, 80, 156, 0.3)',
-              transition: 'all 0.3s ease'
+              cursor: isCreating ? 'not-allowed' : 'pointer',
+              boxShadow: isCreating ? 'none' : '0 2px 8px rgba(42, 80, 156, 0.3)',
+              transition: 'all 0.3s ease',
+              opacity: isCreating ? 0.7 : 1
             }}
           >
-            Create Account
+            {isCreating ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 
