@@ -24,6 +24,14 @@ export default function Home() {
   const featuresRef = useRef(null);
   const [parallax, setParallax] = useState(0);
 
+  // One-time refresh on first visit
+  useEffect(() => {
+    if (!localStorage.getItem('hasRefreshedOnce')) {
+      localStorage.setItem('hasRefreshedOnce', 'true');
+      window.location.reload();
+    }
+  }, []);
+
   // Parallax effect for hero background
   useEffect(() => {
     const handleScroll = () => {

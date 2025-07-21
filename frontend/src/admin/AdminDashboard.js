@@ -13,7 +13,7 @@ function AdminNavBar() {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/home');
+    navigate('/login');
   };
   return (
     <nav style={{
