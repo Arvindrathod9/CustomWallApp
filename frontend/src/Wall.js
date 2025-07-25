@@ -71,8 +71,6 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
           }
         }}
       >
-        {/* Modal root for sticker selector portal */}
-        <div id="wall-modal-root" style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10000 }} />
         {/* Display uploaded image if present */}
         {images.map((img) => {
           const maskStyle = getMaskStyle(img.shape);
@@ -140,13 +138,6 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
                 }}
                 onMouseDown={() => {
                   handleSelectImage(img.id);
-                  setImages(prev =>
-                    prev.map(i =>
-                      i.id === img.id ? { ...i, locked: true } : i
-                    )
-                  );
-                }}
-                onDoubleClick={() => {
                   setImages(prev =>
                     prev.map(i =>
                       i.id === img.id ? { ...i, locked: false } : i

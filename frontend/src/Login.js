@@ -3,19 +3,54 @@ import { useNavigate } from 'react-router-dom';
 
 function NavBarLogin() {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const isMobile = window.innerWidth <= 700;
   const handleFeaturesClick = () => {
     navigate('/home#features');
   };
   return (
     <nav className="modern-navbar">
       <div className="modern-navbar-logo" onClick={() => navigate('/home')}>MEMORY WALL</div>
-      <ul className="modern-navbar-menu">
-        <li className="active" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>Home</li>
-        <li onClick={handleFeaturesClick} style={{ cursor: 'pointer' }}>Features</li>
-        <li>Gallery</li>
-        <li>How It Works</li>
-        <li>Contact</li>
-      </ul>
+      {isMobile ? (
+        <>
+          <button
+            className="hamburger-btn"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, marginLeft: 8 }}
+            onClick={() => setMenuOpen(m => !m)}
+            aria-label="Open menu"
+          >
+            <div style={{ width: 28, height: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+              <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+              <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+            </div>
+          </button>
+          {menuOpen && (
+            <div className="mobile-menu-overlay" style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(255,255,255,0.98)', zIndex: 9999,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 32
+            }}>
+              <button onClick={() => { setMenuOpen(false); navigate('/home'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none', marginBottom: 16 }}>Home</button>
+              <button onClick={() => { setMenuOpen(false); handleFeaturesClick(); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Features</button>
+              <button onClick={() => { setMenuOpen(false); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Gallery</button>
+              <button onClick={() => { setMenuOpen(false); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>How It Works</button>
+              <button onClick={() => { setMenuOpen(false); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Contact</button>
+              <button className="modern-navbar-btn" onClick={() => { setMenuOpen(false); navigate('/login'); }} style={{ fontSize: 22, marginTop: 24 }}>Get Started</button>
+              <button onClick={() => setMenuOpen(false)} style={{ position: 'absolute', top: 24, right: 24, fontSize: 32, color: '#bfa16c', background: 'none', border: 'none' }}>&times;</button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <ul className="modern-navbar-menu">
+            <li className="active" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>Home</li>
+            <li onClick={handleFeaturesClick} style={{ cursor: 'pointer' }}>Features</li>
+            <li>Gallery</li>
+            <li>How It Works</li>
+            <li>Contact</li>
+          </ul>
+        </>
+      )}
     </nav>
   );
 }
@@ -35,41 +70,47 @@ export default function Login({ onLogin }) {
     setError('');
     setIsLoggingIn(true);
     try {
-      // Try admin login first
-      let res = await fetch('http://localhost:5000/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.token) {
-          localStorage.setItem('adminToken', data.token);
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify({ username: 'admin', isAdmin: true, token: data.token }));
+      let res, data;
+      if (username === 'Arvind Rathod') {
+        // Only try admin login for the admin username
+        res = await fetch('http://localhost:5000/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        if (res.ok) {
+          data = await res.json();
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify({ username: 'admin', isAdmin: true, token: data.token }));
+            setIsLoggingIn(false);
+            if (onLogin) onLogin({ username: 'admin', isAdmin: true, token: data.token });
+            setTimeout(() => navigate('/wall'), 50);
+            return;
+          }
+        } else {
+          data = await res.json();
+          setError(data.error || 'Admin login failed');
           setIsLoggingIn(false);
-          if (onLogin) onLogin({ username: 'admin', isAdmin: true, token: data.token });
-          setTimeout(() => navigate('/wall'), 50);
           return;
         }
       }
-      // If not admin, try user login
+      // Normal user login
       res = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
       if (!res.ok) {
-        const data = await res.json();
+        data = await res.json();
         setError(data.error || 'Login failed');
         setIsLoggingIn(false);
         return;
       }
-      const data = await res.json();
+      data = await res.json();
       if (data.token) {
         localStorage.setItem('token', data.token);
-        // Remove any admin token if present
-        localStorage.removeItem('adminToken');
+        localStorage.setItem('user', JSON.stringify(data));
       }
       if (onLogin) onLogin(data);
       setIsLoggingIn(false);

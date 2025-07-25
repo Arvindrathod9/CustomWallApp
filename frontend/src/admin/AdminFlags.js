@@ -11,7 +11,7 @@ export default function AdminFlags() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:5000/api/admin/flags', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -42,7 +42,7 @@ export default function AdminFlags() {
     setIsResolving(true);
     setError('');
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:5000/api/admin/flags/${id}/resolve`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }

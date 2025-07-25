@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
 import Wall from './Wall';
 import WallControls from './WallControls';
@@ -21,6 +21,7 @@ const defaultWalls = [
  */
 function MainWall({ user, onLogout, onUserUpdate }) {
   const navigate = useNavigate();
+  const location = useLocation();
   // Wall background state
   const [selectedType, setSelectedType] = useState('image');
   const [selectedWall, setSelectedWall] = useState(defaultWalls[0]);
@@ -36,6 +37,37 @@ function MainWall({ user, onLogout, onUserUpdate }) {
   const [wallImages, setWallImages] = useState([]);
   const [currentDraftId, setCurrentDraftId] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [extraStickers, setExtraStickers] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const isMobile = window.innerWidth <= 700;
+
+  // Automatically close ProfilePanel on route change (browser back/forward)
+  useEffect(() => {
+    setShowProfile(false);
+  }, [location]);
+
+  // Fetch extra stickers for the user
+  useEffect(() => {
+    async function fetchStickers() {
+      if (!user || !user.userid) return;
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`http://localhost:5000/api/user/${user.userid}/stickers`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setExtraStickers(data);
+        } else {
+          setExtraStickers([]);
+        }
+      } catch {
+        setExtraStickers([]);
+      }
+    }
+    fetchStickers();
+  }, [user]);
 
   // Handle logout
   const handleLogout = () => {
@@ -170,60 +202,115 @@ function MainWall({ user, onLogout, onUserUpdate }) {
     <>
       {/* Top navigation bar */}
       <NavBar user={user} onLogout={handleLogout} onProfileClick={handleProfileClick} />
+      {isMobile && (
+        <button
+          className="hamburger-btn"
+          style={{ position: 'fixed', bottom: 18, left: 18, zIndex: 10002, background: 'white', border: '2px solid #bfa16c', borderRadius: 8, padding: 8, boxShadow: '0 2px 8px #bfa16c33' }}
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open wall options"
+        >
+          <div style={{ width: 28, height: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+            <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+            <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+          </div>
+        </button>
+      )}
+      {/* Floating button for controls on mobile */}
+      {isMobile && (
+        <button
+          className="fab-controls"
+          style={{ position: 'fixed', bottom: 18, right: 18, zIndex: 10002, background: '#bfa16c', color: 'white', border: 'none', borderRadius: '50%', width: 56, height: 56, boxShadow: '0 2px 8px #bfa16c33', fontSize: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          onClick={() => setControlsOpen(true)}
+          aria-label="Open wall controls"
+        >
+          <span style={{ fontWeight: 900, fontSize: 32 }}>+</span>
+        </button>
+      )}
+      {/* Bottom drawer for controls on mobile */}
+      {isMobile && controlsOpen && (
+        <div style={{ position: 'fixed', left: 0, bottom: 0, width: '100vw', maxHeight: '70vh', background: 'rgba(255,255,255,0.98)', zIndex: 99999, boxShadow: '0 -2px 16px #bfa16c33', borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
+          <button onClick={() => setControlsOpen(false)} style={{ alignSelf: 'flex-end', fontSize: 32, color: '#bfa16c', background: 'none', border: 'none', marginBottom: 8 }}>&times;</button>
+          <WallControls
+            showColorPicker={showColorPicker}
+            handleColorButtonClick={handleColorButtonClick}
+            selectedColor={selectedColor}
+            handleColorChange={handleColorChange}
+            handleImageUpload={handleImageUpload}
+            handleSelectShape={handleSelectShape}
+            selectedImgId={selectedImgId}
+            wallImages={wallImages}
+            handleToggleFrame={handleToggleFrame}
+            handleFrameChange={handleFrameChange}
+            handleSaveWall={handleSaveWall}
+            handleDeleteSelected={handleDeleteSelected}
+            setWallImages={setWallImages}
+            setSelectedImgId={setSelectedImgId}
+            setShowShapeSelector={setShowShapeSelector}
+            extraStickers={extraStickers}
+          />
+        </div>
+      )}
       <div className="main-layout" style={{
-        flexDirection: 'row',
+        flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'flex-start',
         justifyContent: 'center',
         minHeight: '100vh',
-        gap: 40,
+        gap: isMobile ? 0 : 40,
         backgroundImage: 'url(/home.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif'
+        fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif',
+        width: '100vw',
+        overflowX: 'auto',
+        padding: isMobile ? 0 : undefined,
+        boxSizing: 'border-box',
       }}>
-        {/* Left: Wall background selection */}
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120, marginTop: 40, gap: 24,
-          background: 'rgba(255,255,255,0.55)', borderRadius: 18, boxShadow: '0 2px 16px #bfa16c11', padding: '24px 12px', backdropFilter: 'blur(6px)'
-        }}>
-          {/* Preset wall backgrounds */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-            {defaultWalls.map((wall, idx) => (
-              <img
-                key={wall}
-                src={wall}
-                alt={`Wall ${idx + 1}`}
-                style={{
-                  width: 80,
-                  height: 56,
-                  objectFit: 'cover',
-                  border: selectedType === 'image' && selectedWall === wall ? '3px solid #2a509c' : '2px solid #ccc',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 6px #0002',
-                  background: '#eee',
-                }}
-                onClick={() => handleWallClick(wall)}
-              />
-            ))}
-          </div>
-          {/* Upload custom wall background */}
-          <div style={{ marginTop: 16 }}>
-            <input type="file" accept="image/*" onChange={handleUpload} id="wall-upload" style={{ display: 'none' }} />
-            <label htmlFor="wall-upload" style={{ background: '#bfa16c', color: 'white', padding: '6px 16px', borderRadius: 18, cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>
-              Upload Wall
-            </label>
-            {uploadedWall && (
-              <img src={uploadedWall} alt="Uploaded Wall" style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 8, marginTop: 8, border: selectedType === 'upload' ? '3px solid #2a509c' : '2px solid #ccc', cursor: 'pointer', boxShadow: '0 1px 6px #0002', background: '#eee' }} onClick={() => setSelectedType('upload')} />
-            )}
-          </div>
-        </div>
-        {/* Center: Wall preview and size controls */}
-        <div style={{ flex: 1, minWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* Left: Wall background selection (hide on mobile) */}
+        {!isMobile && (
           <div style={{
-            background: 'rgba(255,255,255,0.55)', borderRadius: 24, boxShadow: '0 4px 32px #bfa16c22', padding: 32, marginTop: 32, marginBottom: 16, backdropFilter: 'blur(8px)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120, marginTop: 40, gap: 24,
+            background: 'rgba(255,255,255,0.55)', borderRadius: 18, boxShadow: '0 2px 16px #bfa16c11', padding: '24px 12px', backdropFilter: 'blur(6px)'
+          }}>
+            {/* Preset wall backgrounds */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+              {defaultWalls.map((wall, idx) => (
+                <img
+                  key={wall}
+                  src={wall}
+                  alt={`Wall ${idx + 1}`}
+                  style={{ width: 80, height: 56, objectFit: 'cover', border: selectedType === 'image' && selectedWall === wall ? '3px solid #2a509c' : '2px solid #ccc', borderRadius: 8, cursor: 'pointer', boxShadow: '0 1px 6px #0002', background: '#eee' }}
+                  onClick={() => handleWallClick(wall)}
+                />
+              ))}
+            </div>
+            {/* Upload custom wall background */}
+            <div style={{ marginTop: 16 }}>
+              <input type="file" accept="image/*" onChange={handleUpload} id="wall-upload" style={{ display: 'none' }} />
+              <label htmlFor="wall-upload" style={{ background: '#bfa16c', color: 'white', padding: '6px 16px', borderRadius: 18, cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>
+                Upload Wall
+              </label>
+              {uploadedWall && (
+                <img src={uploadedWall} alt="Uploaded Wall" style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 8, marginTop: 8, border: selectedType === 'upload' ? '3px solid #2a509c' : '2px solid #ccc', cursor: 'pointer', boxShadow: '0 1px 6px #0002', background: '#eee' }} onClick={() => setSelectedType('upload')} />
+              )}
+            </div>
+            {/* Color picker and color selection (desktop only) */}
+            <div style={{ marginTop: 16, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <button onClick={handleColorButtonClick} style={{ background: '#bfa16c', color: 'white', border: 'none', borderRadius: 18, padding: '8px 18px', fontWeight: 'bold', marginBottom: 8 }}>Choose Color</button>
+              {showColorPicker && (
+                <input type="color" value={selectedColor} onChange={e => handleColorChange({ hex: e.target.value })} style={{ width: 48, height: 48, border: 'none', borderRadius: 24, marginBottom: 8 }} />
+              )}
+              <div style={{ width: 32, height: 32, background: selectedColor, border: '2px solid #bfa16c', borderRadius: 16 }} />
+            </div>
+          </div>
+        )}
+        {/* Center: Wall preview and size controls */}
+        <div style={{ flex: 1, minWidth: isMobile ? 0 : 400, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowX: isMobile ? 'auto' : 'visible', padding: isMobile ? 0 : undefined }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.55)', borderRadius: 24, boxShadow: '0 4px 32px #bfa16c22', padding: isMobile ? 8 : 32, marginTop: isMobile ? 8 : 32, marginBottom: isMobile ? 8 : 16, backdropFilter: 'blur(8px)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', width: 'fit-content',
+            minWidth: isMobile ? '98vw' : 400, maxWidth: isMobile ? '99vw' : undefined
           }}>
             {/* Wall preview */}
             <Wall
@@ -237,17 +324,19 @@ function MainWall({ user, onLogout, onUserUpdate }) {
               showShapeSelector={showShapeSelector}
               setShowShapeSelector={setShowShapeSelector}
             />
-            {/* Wall size controls */}
-            <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', background: '#f7f8fa', borderRadius: 10, boxShadow: '0 1px 6px #0001', padding: '10px 18px', marginBottom: 4 }}>
-              <label>
-                Width:
-                <input type="number" value={width} min={200} max={2000} onChange={e => setWidth(Number(e.target.value))} style={{ marginLeft: 4, width: 60, borderRadius: 4, border: '1px solid #bbb', padding: '2px 6px' }} />
-              </label>
-              <label>
-                Height:
-                <input type="number" value={height} min={200} max={2000} onChange={e => setHeight(Number(e.target.value))} style={{ marginLeft: 4, width: 60, borderRadius: 4, border: '1px solid #bbb', padding: '2px 6px' }} />
-              </label>
-            </div>
+            {/* Wall size controls (hide on mobile, now in sidebar) */}
+            {!isMobile && (
+              <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', background: '#f7f8fa', borderRadius: 10, boxShadow: '0 1px 6px #0001', padding: '10px 18px', marginBottom: 4 }}>
+                <label>
+                  Width:
+                  <input type="number" value={width} min={200} max={2000} onChange={e => setWidth(Number(e.target.value))} style={{ marginLeft: 4, width: 60, borderRadius: 4, border: '1px solid #bbb', padding: '2px 6px' }} />
+                </label>
+                <label>
+                  Height:
+                  <input type="number" value={height} min={200} max={2000} onChange={e => setHeight(Number(e.target.value))} style={{ marginLeft: 4, width: 60, borderRadius: 4, border: '1px solid #bbb', padding: '2px 6px' }} />
+                </label>
+              </div>
+            )}
             {/* Drafts feature as a separate component */}
             <WallDrafts
               user={user}
@@ -260,25 +349,27 @@ function MainWall({ user, onLogout, onUserUpdate }) {
           </div>
         </div>
         {/* Right: Controls (color picker, upload, stickers, shape/frame, save/delete) */}
-        <WallControls
-          showColorPicker={showColorPicker}
-          handleColorButtonClick={handleColorButtonClick}
-          selectedColor={selectedColor}
-          handleColorChange={handleColorChange}
-          handleImageUpload={handleImageUpload}
-          handleSelectShape={handleSelectShape}
-          selectedImgId={selectedImgId}
-          wallImages={wallImages}
-          handleToggleFrame={handleToggleFrame}
-          handleFrameChange={handleFrameChange}
-          handleSaveWall={handleSaveWall}
-          handleDeleteSelected={handleDeleteSelected}
-          setWallImages={setWallImages}
-          setSelectedImgId={setSelectedImgId}
-          setShowShapeSelector={setShowShapeSelector}
-        />
+        {!isMobile && (
+          <WallControls
+            showColorPicker={showColorPicker}
+            handleColorButtonClick={handleColorButtonClick}
+            selectedColor={selectedColor}
+            handleColorChange={handleColorChange}
+            handleImageUpload={handleImageUpload}
+            handleSelectShape={handleSelectShape}
+            selectedImgId={selectedImgId}
+            wallImages={wallImages}
+            handleToggleFrame={handleToggleFrame}
+            handleFrameChange={handleFrameChange}
+            handleSaveWall={handleSaveWall}
+            handleDeleteSelected={handleDeleteSelected}
+            setWallImages={setWallImages}
+            setSelectedImgId={setSelectedImgId}
+            setShowShapeSelector={setShowShapeSelector}
+            extraStickers={extraStickers}
+          />
+        )}
       </div>
-
       {/* Profile Panel */}
       <ProfilePanel
         user={user}
@@ -286,7 +377,6 @@ function MainWall({ user, onLogout, onUserUpdate }) {
         onClose={handleProfileClose}
         onUpdateUser={handleUserUpdate}
       />
-
       {/* Overlay to close profile when clicking outside */}
       {showProfile && (
         <div

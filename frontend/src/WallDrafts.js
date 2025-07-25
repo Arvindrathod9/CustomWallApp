@@ -17,6 +17,18 @@ export default function WallDrafts({
   const [shareLink, setShareLink] = useState('');
   const navigate = useNavigate();
 
+  // Role-based feature restriction
+  const canShareOrSave = user && (user.isAdmin || ['advanced', 'premium', 'admin'].includes(user.role));
+
+  // Helper to get feature value
+  const getFeatureValue = (key) => {
+    if (!user || !user.features) return null;
+    const f = user.features.find(f => f.feature_key === key);
+    return f ? f.feature_value : null;
+  };
+  const draftsLimit = parseInt(getFeatureValue('drafts_limit')) || 0;
+  const canShare = getFeatureValue('share') === 'true';
+
   // API helpers
   const fetchDrafts = async (userid) => {
     const token = localStorage.getItem('token');
@@ -104,8 +116,10 @@ export default function WallDrafts({
         <span style={{ fontWeight: 'bold', color: '#bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>This wall is <span style={{ color: '#1e7b2a' }}>Public</span> and shareable</span>
         {currentDraftId && (
           <button
-            style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', marginLeft: 8, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
-            onClick={() => handleCopyLink(currentDraftId)}
+            style={{ background: canShare && canShareOrSave ? '#bfa16c' : '#ccc', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', marginLeft: 8, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: canShare && canShareOrSave ? 'pointer' : 'not-allowed' }}
+            onClick={canShare && canShareOrSave ? () => handleCopyLink(currentDraftId) : undefined}
+            disabled={!canShare || !canShareOrSave}
+            title={canShare && canShareOrSave ? 'Copy share link' : 'Upgrade your plan to share'}
           >
             Copy Share Link
           </button>
@@ -117,25 +131,31 @@ export default function WallDrafts({
       <div style={{ display: 'flex', gap: 12 }}>
         {/* Save as New Draft button: only show if not editing an existing draft */}
         {!currentDraftId && (
-        <button onClick={async () => {
+        <button onClick={canShareOrSave ? async () => {
           const allDrafts = drafts.length ? drafts : await fetchDrafts(user.userid);
           setDrafts(allDrafts);
+          if (draftsLimit && allDrafts.length >= draftsLimit) {
+            alert(`You have reached your drafts limit (${draftsLimit}). Delete a draft or upgrade your plan to save more.`);
+            return;
+          }
           let name = getNextDraftName();
           let publicVal = true; // Always public
             const wallData = await getWallDraftData();
             const result = await saveDraft(user.userid, name, wallData, null, publicVal);
-            alert(`Draft "${name}" saved successfully!`);
+            alert(`Draft \"${name}\" saved successfully!`);
             // Do NOT setCurrentDraftId here, so further saves are always new drafts
             if (result && result.id) navigate(`/wall/draft/${result.id}`);
-          }}
-          style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+          } : undefined}
+          style={{ background: canShareOrSave ? '#bfa16c' : '#ccc', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: canShareOrSave ? 'pointer' : 'not-allowed' }}
+          disabled={!canShareOrSave}
+          title={canShareOrSave ? 'Save as new draft' : 'Upgrade to Advanced or Premium to save drafts'}
         >
             Save as New Draft
         </button>
         )}
         {/* Update Draft button: only show if editing an existing draft */}
         {currentDraftId && (
-          <button onClick={async () => {
+          <button onClick={canShareOrSave ? async () => {
             const allDrafts = drafts.length ? drafts : await fetchDrafts(user.userid);
             setDrafts(allDrafts);
             let id = Number(currentDraftId);
@@ -148,10 +168,12 @@ export default function WallDrafts({
           }
           const wallData = await getWallDraftData();
           const result = await saveDraft(user.userid, name, wallData, id, publicVal);
-            alert(`Draft "${name}" updated successfully!`);
+            alert(`Draft \"${name}\" updated successfully!`);
             if (id) navigate(`/wall/draft/${id}`);
-        }}
-          style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+        } : undefined}
+          style={{ background: canShareOrSave ? '#bfa16c' : '#ccc', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: canShareOrSave ? 'pointer' : 'not-allowed' }}
+          disabled={!canShareOrSave}
+          title={canShareOrSave ? 'Update draft' : 'Upgrade to Advanced or Premium to update drafts'}
         >
             Update Draft
         </button>
@@ -194,6 +216,17 @@ export default function WallDrafts({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {!canShareOrSave && (
+        <div style={{ color: '#c62828', marginTop: 16, fontWeight: 'bold' }}>
+          Upgrade to Advanced or Premium to save or share drafts.
+          <button
+            style={{ marginLeft: 16, background: '#bfa16c', color: 'white', borderRadius: 18, padding: '6px 18px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 15, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+            onClick={() => navigate('/upgrade')}
+          >
+            Upgrade
+          </button>
         </div>
       )}
     </div>

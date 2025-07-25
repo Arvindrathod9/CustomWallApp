@@ -12,7 +12,7 @@ export default function AdminAltars() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:5000/api/admin/altars', {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -39,7 +39,7 @@ export default function AdminAltars() {
     setError('');
     setSelectedAltar(null);
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:5000/api/admin/altars/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -59,7 +59,7 @@ export default function AdminAltars() {
     setIsSaving(true);
     setError('');
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:5000/api/admin/altars/${editAltar.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -78,7 +78,7 @@ export default function AdminAltars() {
     if (!window.confirm('Are you sure you want to delete this altar?')) return;
     setError('');
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:5000/api/admin/altars/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }

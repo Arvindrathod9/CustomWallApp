@@ -35,6 +35,8 @@ export default function SharedWall({ user, onLogout }) {
   const [editors, setEditors] = useState([]);
   const [newEditor, setNewEditor] = useState('');
   const [editorError, setEditorError] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = window.innerWidth <= 700;
 
   useEffect(() => {
     async function fetchDraft() {
@@ -260,60 +262,127 @@ export default function SharedWall({ user, onLogout }) {
     </div>
   );
 
+  // Role-based feature restriction
+  const canShareOrSave = user && ['advanced', 'premium', 'admin'].includes(user.role);
+
   return (
     <>
       {/* Top navigation bar */}
       <NavBar user={user} onLogout={onLogout} onProfileClick={handleProfileClick} />
-      <div className="main-layout" style={{
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        gap: 40,
-        backgroundImage: 'url(/home.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif'
-      }}>
-        {/* Left: Wall background selection */}
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120, marginTop: 40, gap: 24,
-          background: 'rgba(255,255,255,0.55)', borderRadius: 18, boxShadow: '0 2px 16px #bfa16c11', padding: '24px 12px', backdropFilter: 'blur(6px)'
+      {isMobile && (
+        <button
+          className="hamburger-btn"
+          style={{ position: 'fixed', top: 18, left: 18, zIndex: 1002, background: 'white', border: '2px solid #bfa16c', borderRadius: 8, padding: 8, boxShadow: '0 2px 8px #bfa16c33' }}
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open wall options"
+        >
+          <div style={{ width: 28, height: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+            <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+            <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+          </div>
+        </button>
+      )}
+      {isMobile && sidebarOpen && (
+        <div className="mobile-wall-sidebar" style={{
+          position: 'fixed', top: 0, left: 0, width: '80vw', maxWidth: 340, height: '100vh', background: 'rgba(255,255,255,0.98)', zIndex: 2000,
+          boxShadow: '2px 0 16px #bfa16c33', display: 'flex', flexDirection: 'column', padding: 24, gap: 18
         }}>
-          {/* Preset wall backgrounds */}
+          <button onClick={() => setSidebarOpen(false)} style={{ alignSelf: 'flex-end', fontSize: 32, color: '#bfa16c', background: 'none', border: 'none', marginBottom: 12 }}>&times;</button>
+          {/* Wall background selection and upload */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
             {defaultWalls.map((wall, idx) => (
               <img
                 key={wall}
                 src={wall}
                 alt={`Wall ${idx + 1}`}
-                style={{
-                  width: 80,
-                  height: 56,
-                  objectFit: 'cover',
-                  border: selectedType === 'image' && selectedWall === wall ? '3px solid #2a509c' : '2px solid #ccc',
-                  borderRadius: 8,
-                  cursor: isOwner ? 'pointer' : 'not-allowed',
-                  boxShadow: '0 1px 6px #0002',
-                  background: '#eee',
-                  opacity: isOwner ? 1 : 0.5,
-                }}
-                onClick={() => isOwner && handleWallClick(wall)}
+                style={{ width: 80, height: 56, objectFit: 'cover', border: selectedType === 'image' && selectedWall === wall ? '3px solid #2a509c' : '2px solid #ccc', borderRadius: 8, cursor: isOwner ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #0002', background: '#eee', opacity: isOwner ? 1 : 0.5 }}
+                onClick={() => isOwner && (handleWallClick(wall), setSidebarOpen(false))}
               />
             ))}
+            <div style={{ marginTop: 16 }}>
+              <input type="file" accept="image/*" onChange={handleUpload} id="wall-upload" style={{ display: 'none' }} />
+              <label htmlFor="wall-upload" style={{ background: '#bfa16c', color: 'white', padding: '6px 16px', borderRadius: 18, cursor: isOwner ? 'pointer' : 'not-allowed', fontWeight: 'bold', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', opacity: isOwner ? 1 : 0.5 }}>
+                Upload Wall
+              </label>
+              {uploadedWall && (
+                <img src={uploadedWall} alt="Uploaded Wall" style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 8, marginTop: 8, border: selectedType === 'upload' ? '3px solid #2a509c' : '2px solid #ccc', cursor: isOwner ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #0002', background: '#eee', opacity: isOwner ? 1 : 0.5 }} onClick={() => isOwner && (setSelectedType('upload'), setSidebarOpen(false))} />
+              )}
+            </div>
+            {/* Color picker and color selection */}
+            <div style={{ marginTop: 16, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <button onClick={handleColorButtonClick} style={{ background: '#bfa16c', color: 'white', border: 'none', borderRadius: 18, padding: '8px 18px', fontWeight: 'bold', marginBottom: 8, opacity: isOwner ? 1 : 0.5, cursor: isOwner ? 'pointer' : 'not-allowed' }}>Choose Color</button>
+              {showColorPicker && (
+                <input type="color" value={selectedColor} onChange={e => handleColorChange({ hex: e.target.value })} style={{ width: 48, height: 48, border: 'none', borderRadius: 24, marginBottom: 8 }} disabled={!isOwner} />
+              )}
+              <div style={{ width: 32, height: 32, background: selectedColor, border: '2px solid #bfa16c', borderRadius: 16 }} />
+            </div>
           </div>
-          {/* Upload custom wall background */}
-          <div style={{ marginTop: 16 }}>
-            <input type="file" accept="image/*" onChange={isOwner ? handleUpload : undefined} id="wall-upload" style={{ display: 'none' }} disabled={!isOwner} />
-            <label htmlFor="wall-upload" style={{ background: '#bfa16c', color: 'white', padding: '6px 16px', borderRadius: 18, cursor: isOwner ? 'pointer' : 'not-allowed', fontWeight: 'bold', boxShadow: '0 1px 6px #bfa16c33', opacity: isOwner ? 1 : 0.5, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16 }}>
-              Upload Wall
+          {/* Wall size controls */}
+          <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center', background: '#f7f8fa', borderRadius: 10, boxShadow: '0 1px 6px #0001', padding: '10px 18px', marginBottom: 4 }}>
+            <label>
+              Width:
+              <input type="number" value={width} min={200} max={2000} onChange={e => setWidth(Number(e.target.value))} style={{ marginLeft: 4, width: 60, borderRadius: 4, border: '1px solid #bbb', padding: '2px 6px' }} disabled={!isOwner} />
             </label>
-            {uploadedWall && (
-              <img src={uploadedWall} alt="Uploaded Wall" style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 8, marginTop: 8, border: selectedType === 'upload' ? '3px solid #2a509c' : '2px solid #ccc', cursor: isOwner ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #0002', background: '#eee', opacity: isOwner ? 1 : 0.5 }} onClick={() => isOwner && setSelectedType('upload')} />
-            )}
+            <label>
+              Height:
+              <input type="number" value={height} min={200} max={2000} onChange={e => setHeight(Number(e.target.value))} style={{ marginLeft: 4, width: 60, borderRadius: 4, border: '1px solid #bbb', padding: '2px 6px' }} disabled={!isOwner} />
+            </label>
           </div>
         </div>
+      )}
+      <div className="main-layout" style={{
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        gap: isMobile ? 0 : 40,
+        backgroundImage: 'url(/home.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif',
+        width: '100vw',
+        overflowX: 'auto',
+      }}>
+        {/* Left: Wall background selection (hide on mobile) */}
+        {!isMobile && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 120, marginTop: 40, gap: 24,
+            background: 'rgba(255,255,255,0.55)', borderRadius: 18, boxShadow: '0 2px 16px #bfa16c11', padding: '24px 12px', backdropFilter: 'blur(6px)'
+          }}>
+            {/* Preset wall backgrounds */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+              {defaultWalls.map((wall, idx) => (
+                <img
+                  key={wall}
+                  src={wall}
+                  alt={`Wall ${idx + 1}`}
+                  style={{ width: 80, height: 56, objectFit: 'cover', border: selectedType === 'image' && selectedWall === wall ? '3px solid #2a509c' : '2px solid #ccc', borderRadius: 8, cursor: isOwner ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #0002', background: '#eee', opacity: isOwner ? 1 : 0.5 }}
+                  onClick={() => isOwner && handleWallClick(wall)}
+                />
+              ))}
+            </div>
+            {/* Upload custom wall background */}
+            <div style={{ marginTop: 16 }}>
+              <input type="file" accept="image/*" onChange={handleUpload} id="wall-upload" style={{ display: 'none' }} />
+              <label htmlFor="wall-upload" style={{ background: '#bfa16c', color: 'white', padding: '6px 16px', borderRadius: 18, cursor: isOwner ? 'pointer' : 'not-allowed', fontWeight: 'bold', boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', opacity: isOwner ? 1 : 0.5 }}>
+                Upload Wall
+              </label>
+              {uploadedWall && (
+                <img src={uploadedWall} alt="Uploaded Wall" style={{ width: 80, height: 56, objectFit: 'cover', borderRadius: 8, marginTop: 8, border: selectedType === 'upload' ? '3px solid #2a509c' : '2px solid #ccc', cursor: isOwner ? 'pointer' : 'not-allowed', boxShadow: '0 1px 6px #0002', background: '#eee', opacity: isOwner ? 1 : 0.5 }} onClick={() => isOwner && setSelectedType('upload')} />
+              )}
+            </div>
+            {/* Color picker and color selection (desktop only) */}
+            <div style={{ marginTop: 16, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <button onClick={handleColorButtonClick} style={{ background: '#bfa16c', color: 'white', border: 'none', borderRadius: 18, padding: '8px 18px', fontWeight: 'bold', marginBottom: 8, opacity: isOwner ? 1 : 0.5, cursor: isOwner ? 'pointer' : 'not-allowed' }}>Choose Color</button>
+              {showColorPicker && (
+                <input type="color" value={selectedColor} onChange={e => handleColorChange({ hex: e.target.value })} style={{ width: 48, height: 48, border: 'none', borderRadius: 24, marginBottom: 8 }} disabled={!isOwner} />
+              )}
+              <div style={{ width: 32, height: 32, background: selectedColor, border: '2px solid #bfa16c', borderRadius: 16 }} />
+            </div>
+          </div>
+        )}
         {/* Center: Wall preview and size controls */}
         <div style={{ flex: 1, minWidth: 400, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{
@@ -348,20 +417,35 @@ export default function SharedWall({ user, onLogout }) {
             {/* Share and Update Draft buttons */}
             <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
               <button
-                style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
-                onClick={handleShare}
+                style={{ background: canShareOrSave ? '#bfa16c' : '#ccc', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: canShareOrSave ? 'pointer' : 'not-allowed' }}
+                onClick={canShareOrSave ? handleShare : undefined}
+                disabled={!canShareOrSave}
+                title={canShareOrSave ? 'Copy share link' : 'Upgrade to Advanced or Premium to share'}
               >
                 Share
               </button>
               {(isOwner || isEditor) && (
                 <button
-                  style={{ background: '#bfa16c', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
-                  onClick={handleSaveDraft}
+                  style={{ background: canShareOrSave ? '#bfa16c' : '#ccc', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: canShareOrSave ? 'pointer' : 'not-allowed' }}
+                  onClick={canShareOrSave ? handleSaveDraft : undefined}
+                  disabled={!canShareOrSave}
+                  title={canShareOrSave ? 'Update draft' : 'Upgrade to Advanced or Premium to update drafts'}
                 >
                   Update Draft
                 </button>
               )}
             </div>
+            {!canShareOrSave && (
+              <div style={{ color: '#c62828', marginTop: 16, fontWeight: 'bold' }}>
+                Upgrade to Advanced or Premium to save or share drafts.
+                <button
+                  style={{ marginLeft: 16, background: '#bfa16c', color: 'white', borderRadius: 18, padding: '6px 18px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 15, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+                  onClick={() => window.location.href = '/upgrade'}
+                >
+                  Upgrade
+                </button>
+              </div>
+            )}
           </div>
         </div>
         {/* Right: Controls (color picker, upload, stickers, shape/frame, save/delete) */}
@@ -407,7 +491,7 @@ export default function SharedWall({ user, onLogout }) {
                 ));
               }
             }}
-            handleSaveWall={handleSaveDraft}
+            handleSaveWall={canShareOrSave ? handleSaveDraft : undefined}
             handleDeleteSelected={() => {
               if (selectedImgId !== null) {
                 setWallImages((prev) => prev.filter((img) => img.id !== selectedImgId));

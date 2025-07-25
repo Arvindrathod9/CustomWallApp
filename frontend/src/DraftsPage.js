@@ -3,6 +3,50 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaUserFriends } from 'react-icons/fa';
 
+function DraftsNavBar() {
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const isMobile = window.innerWidth <= 700;
+  return (
+    <nav className="modern-navbar">
+      <div className="modern-navbar-logo" onClick={() => navigate('/wall')}>MEMORY WALL</div>
+      {isMobile ? (
+        <>
+          <button
+            className="hamburger-btn"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, marginLeft: 8 }}
+            onClick={() => setMenuOpen(m => !m)}
+            aria-label="Open menu"
+          >
+            <div style={{ width: 28, height: 22, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+              <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+              <div style={{ height: 4, background: '#bfa16c', borderRadius: 2 }} />
+            </div>
+          </button>
+          {menuOpen && (
+            <div className="mobile-menu-overlay" style={{
+              position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(255,255,255,0.98)', zIndex: 9999,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 32
+            }}>
+              <button onClick={() => { setMenuOpen(false); navigate('/wall'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none', marginBottom: 16 }}>My Wall</button>
+              <button onClick={() => { setMenuOpen(false); navigate('/drafts'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Drafts</button>
+              <button onClick={() => { setMenuOpen(false); navigate('/home'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Home</button>
+              <button onClick={() => setMenuOpen(false)} style={{ position: 'absolute', top: 24, right: 24, fontSize: 32, color: '#bfa16c', background: 'none', border: 'none' }}>&times;</button>
+            </div>
+          )}
+        </>
+      ) : (
+        <ul className="modern-navbar-menu">
+          <li onClick={() => navigate('/wall')} style={{ cursor: 'pointer' }}>My Wall</li>
+          <li onClick={() => navigate('/drafts')} style={{ cursor: 'pointer' }}>Drafts</li>
+          <li onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>Home</li>
+        </ul>
+      )}
+    </nav>
+  );
+}
+
 export default function DraftsPage() {
   const [drafts, setDrafts] = useState([]);
   const [sharedDrafts, setSharedDrafts] = useState([]);
@@ -10,6 +54,18 @@ export default function DraftsPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
+
+  // Role-based feature restriction
+  const canShareOrSave = user && ['advanced', 'premium', 'admin'].includes(user.role);
+
+  // Helper to get feature value
+  const getFeatureValue = (key) => {
+    if (!user || !user.features) return null;
+    const f = user.features.find(f => f.feature_key === key);
+    return f ? f.feature_value : null;
+  };
+  const draftsLimit = parseInt(getFeatureValue('drafts_limit')) || 0;
+  const canShare = getFeatureValue('share') === 'true';
 
   useEffect(() => {
     async function fetchDrafts() {
@@ -56,6 +112,10 @@ export default function DraftsPage() {
   };
 
   const handleCreateNewDraft = async () => {
+    if (draftsLimit && drafts.length >= draftsLimit) {
+      alert(`You have reached your drafts limit (${draftsLimit}). Delete a draft or upgrade your plan to save more.`);
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       // Default wall state for a new draft
@@ -96,15 +156,29 @@ export default function DraftsPage() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundImage: 'url(/home.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', padding: 40 }}>
+      <DraftsNavBar />
       <h2 style={{ color: '#bfa16c', marginBottom: 32, textAlign: 'center', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Your Drafts</h2>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
         <button
-          style={{ background: '#bfa16c', color: 'white', borderRadius: 24, padding: '10px 32px', fontWeight: 'bold', fontSize: 18, boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}
-          onClick={handleCreateNewDraft}
+          style={{ background: canShareOrSave ? '#bfa16c' : '#ccc', color: 'white', borderRadius: 24, padding: '10px 32px', fontWeight: 'bold', fontSize: 18, boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', cursor: canShareOrSave ? 'pointer' : 'not-allowed' }}
+          onClick={canShareOrSave ? handleCreateNewDraft : undefined}
+          disabled={!canShareOrSave}
+          title={canShareOrSave ? '+ Create New Draft' : 'Upgrade to Advanced or Premium to create drafts'}
         >
           + Create New Draft
         </button>
       </div>
+      {!canShareOrSave && (
+        <div style={{ color: '#c62828', marginBottom: 24, fontWeight: 'bold', textAlign: 'center' }}>
+          Upgrade to Advanced or Premium to create, save, or share drafts.
+          <button
+            style={{ marginLeft: 16, background: '#bfa16c', color: 'white', borderRadius: 18, padding: '6px 18px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 15, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}
+            onClick={() => navigate('/upgrade')}
+          >
+            Upgrade
+          </button>
+        </div>
+      )}
       <div style={{ maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {drafts.length === 0 && <div style={{ textAlign: 'center', color: '#888' }}>No drafts found.</div>}
         {drafts.map(d => (
@@ -122,8 +196,10 @@ export default function DraftsPage() {
                 Edit
               </button>
               <button
-                style={{ background: '#7b2ff2', color: 'white', borderRadius: 24, padding: '8px 20px', fontWeight: 'bold', fontSize: 16, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}
-                onClick={() => handleShare(d.id)}
+                style={{ background: canShareOrSave && canShare ? '#7b2ff2' : '#ccc', color: 'white', borderRadius: 24, padding: '8px 20px', fontWeight: 'bold', fontSize: 16, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', cursor: canShareOrSave && canShare ? 'pointer' : 'not-allowed' }}
+                onClick={canShareOrSave && canShare ? () => handleShare(d.id) : undefined}
+                disabled={!canShareOrSave || !canShare}
+                title={canShareOrSave && canShare ? 'Share draft' : 'Upgrade your plan to share drafts'}
               >
                 Share
               </button>

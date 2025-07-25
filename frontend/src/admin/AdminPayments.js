@@ -10,7 +10,7 @@ export default function AdminPayments() {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:5000/api/admin/payments', {
         headers: { Authorization: `Bearer ${token}` }
       });

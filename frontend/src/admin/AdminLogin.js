@@ -26,7 +26,8 @@ export default function AdminLogin() {
       }
       const data = await res.json();
       if (data.token) {
-        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify({ username: 'admin', isAdmin: true, token: data.token }));
         navigate('/admin');
       }
       setIsLoggingIn(false);
