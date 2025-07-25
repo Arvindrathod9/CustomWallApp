@@ -389,6 +389,12 @@ export default function SharedWall({ user, onLogout }) {
             background: 'rgba(255,255,255,0.55)', borderRadius: 24, boxShadow: '0 4px 32px #bfa16c22', padding: 32, marginTop: 32, marginBottom: 16, backdropFilter: 'blur(8px)',
             display: 'flex', flexDirection: 'column', alignItems: 'center', width: 'fit-content',
           }}>
+            {/* Show owner's username if available */}
+            {draft && draft.owner_username && (
+              <div style={{ fontWeight: 'bold', color: '#2a509c', marginBottom: 12 }}>
+                Shared by: {draft.owner_username}
+              </div>
+            )}
             {/* Wall preview */}
             <Wall
               wallBg={wallBg}

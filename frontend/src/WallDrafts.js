@@ -112,8 +112,7 @@ export default function WallDrafts({
   return (
     <div style={{ marginTop: 16 }}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-        {/* Hide the toggle, always public for now */}
-        <span style={{ fontWeight: 'bold', color: '#bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>This wall is <span style={{ color: '#1e7b2a' }}>Public</span> and shareable</span>
+        {/* Removed public/private status text */}
         {currentDraftId && (
           <button
             style={{ background: canShare && canShareOrSave ? '#bfa16c' : '#ccc', color: 'white', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', marginLeft: 8, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 16, boxShadow: '0 1px 6px #bfa16c33', cursor: canShare && canShareOrSave ? 'pointer' : 'not-allowed' }}
@@ -211,7 +210,6 @@ export default function WallDrafts({
                 }} style={{ marginRight: 8, background: '#bfa16c', color: 'white', borderRadius: 18, padding: '6px 18px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 15, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }}>
                   Load Draft {d.name}
                 </button>
-                <span style={{ color: '#2a509c', fontWeight: 'bold' }}>Public</span>
                 <button style={{ marginLeft: 8, background: '#bfa16c', color: 'white', borderRadius: 18, padding: '6px 18px', fontWeight: 'bold', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', fontSize: 15, boxShadow: '0 1px 6px #bfa16c33', cursor: 'pointer' }} onClick={() => handleCopyLink(d.id)}>Copy Link</button>
               </li>
             ))}

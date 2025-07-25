@@ -155,7 +155,7 @@ export default function DraftsPage() {
   if (error) return <div style={{ color: '#c62828', textAlign: 'center', marginTop: 40 }}>{error}</div>;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundImage: 'url(/home.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', padding: 40 }}>
+    <div style={{ minHeight: '100vh', backgroundImage: 'url(/home.jpg)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', paddingRight: 40, paddingLeft: 0, paddingTop: 0, paddingBottom: 0 }}>
       <DraftsNavBar />
       <h2 style={{ color: '#bfa16c', marginBottom: 32, textAlign: 'center', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Your Drafts</h2>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
@@ -185,7 +185,6 @@ export default function DraftsPage() {
           <div key={d.id} style={{ background: 'rgba(255,255,255,0.55)', borderRadius: 16, boxShadow: '0 2px 12px #bfa16c11', padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, backdropFilter: 'blur(6px)' }}>
             <div>
               <div style={{ fontWeight: 'bold', fontSize: 20, color: '#bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Draft {d.name}</div>
-              <div style={{ color: d.public ? '#1e7b2a' : '#c62828', fontWeight: 'bold', marginTop: 4 }}>{d.public ? 'Public' : 'Private'}</div>
               <div style={{ color: '#888', fontSize: 13, marginTop: 2 }}>Last updated: {d.created_at ? new Date(d.created_at).toLocaleString() : 'N/A'}</div>
             </div>
             <div style={{ display: 'flex', gap: 12 }}>
@@ -229,7 +228,6 @@ export default function DraftsPage() {
             <div key={d.id} style={{ background: 'rgba(255,255,255,0.35)', borderRadius: 16, boxShadow: '0 2px 12px #7b2ff211', padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, backdropFilter: 'blur(4px)' }}>
               <div>
                 <div style={{ fontWeight: 'bold', fontSize: 18, color: '#7b2ff2', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Draft {d.name}</div>
-                <div style={{ color: d.public ? '#1e7b2a' : '#c62828', fontWeight: 'bold', marginTop: 4 }}>{d.public ? 'Public' : 'Private'}</div>
                 <div style={{ color: '#888', fontSize: 13, marginTop: 2 }}>Last updated: {d.created_at ? new Date(d.created_at).toLocaleString() : 'N/A'}</div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>

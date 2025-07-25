@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 // List of sticker image paths (should be placed in public/stickers/)
@@ -27,6 +27,11 @@ const StickerSelector = ({ onStickerSelect, extraStickers = [] }) => {
   // Only show premium stickers if assigned
   const assignedPremium = PREMIUM_STICKERS.filter(s => extraStickers.includes(s.split('/').pop()));
   const allStickers = [...DEFAULT_STICKERS, ...assignedPremium];
+
+  // Close modal on unmount to avoid portal errors
+  useEffect(() => {
+    return () => setOpen(false);
+  }, []);
 
   const modalRoot = document.getElementById('modal-root');
 

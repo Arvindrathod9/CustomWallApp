@@ -336,20 +336,25 @@ app.get('/api/draft/:id', authenticateJWT, (req, res) => {
   const { id } = req.params;
   const currentUserId = req.user.userid;
   const currentUsername = req.user.username;
-  db.query('SELECT * FROM drafts WHERE id = ?', [id], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
-    if (results.length === 0) return res.status(404).json({ error: 'Draft not found' });
-    const draft = results[0];
-    let editors = [];
-    try {
-      editors = draft.editors ? JSON.parse(draft.editors) : [];
-    } catch {}
-    if (draft.public || draft.userid == currentUserId || editors.includes(currentUsername)) {
-      res.json(draft);
-    } else {
-      res.status(403).json({ error: 'You do not have access to this draft' });
+  // Join with users table to get username
+  db.query(
+    'SELECT drafts.*, users.username AS owner_username FROM drafts JOIN users ON drafts.userid = users.id WHERE drafts.id = ?',
+    [id],
+    (err, results) => {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      if (results.length === 0) return res.status(404).json({ error: 'Draft not found' });
+      const draft = results[0];
+      let editors = [];
+      try {
+        editors = draft.editors ? JSON.parse(draft.editors) : [];
+      } catch {}
+      if (draft.public || draft.userid == currentUserId || editors.includes(currentUsername)) {
+        res.json(draft);
+      } else {
+        res.status(403).json({ error: 'You do not have access to this draft' });
+      }
     }
-  });
+  );
 });
 
 // Delete a draft
