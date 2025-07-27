@@ -3,7 +3,32 @@
   box-sizing: border-box;
 }
 
+/* --- Responsive Enhancements (AI Added) --- */
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.container, .main-layout, .modern-card, .modern-section, .profile-panel, .chat-panel {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button, .modern-btn-primary, .modern-btn-secondary {
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+input, select, textarea {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 body {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   margin: 0;
   padding: 0;
   font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
@@ -869,5 +894,50 @@ body, .modern-home-root {
   .mobile-wall-sidebar {
     display: flex !important;
     z-index: 99999 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 15px;
+  }
+  .main-layout, .modern-card, .modern-section, .profile-panel, .chat-panel {
+    padding: 0 2vw !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  .modern-navbar, .modern-footer {
+    flex-direction: column !important;
+    padding: 4px 0 !important;
+    height: auto !important;
+  }
+  .modern-navbar-logo {
+    font-size: 18px !important;
+    padding: 0 2px !important;
+  }
+  .modern-navbar-menu {
+    flex-direction: column !important;
+    gap: 4px;
+    font-size: 15px;
+  }
+  .modern-btn-primary, .modern-btn-secondary, button {
+    font-size: 15px !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+  }
+  input, select, textarea {
+    font-size: 15px !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+  }
+  .modern-hero-content {
+    padding: 8px 0 !important;
+    max-width: 98vw !important;
+  }
+  .modern-hero-title, .modern-hero-desc {
+    text-align: center !important;
+  }
+  .modern-card, .modern-section {
+    margin-bottom: 10px !important;
   }
 }
