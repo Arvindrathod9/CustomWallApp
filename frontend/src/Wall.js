@@ -10,6 +10,28 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
     setShowShapeSelector(false);
   };
 
+  // Handle escape key to cancel sticker placement
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && window.pendingStickerPlacement) {
+        window.pendingStickerPlacement = null;
+        // Reset cursor
+        const wall = document.querySelector('.custom-wall');
+        if (wall) {
+          wall.style.cursor = 'default';
+        }
+        // Remove preview
+        const preview = document.getElementById('sticker-preview');
+        if (preview) {
+          preview.remove();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Handle zoom with mouse wheel
   const handleWheel = (e, imgId) => {
     if (selectedImgId !== imgId) return;
@@ -68,6 +90,60 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
           if (e.target === e.currentTarget) {
             setSelectedImgId(null);
             setShowShapeSelector(false);
+          }
+        }}
+        onClick={e => {
+          // Handle single click for placing stickers
+          if (e.target === e.currentTarget) {
+            // If there's a pending sticker placement, place it here
+            const pendingSticker = window.pendingStickerPlacement;
+            if (pendingSticker) {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const x = e.clientX - rect.left - (pendingSticker.width / 2);
+              const y = e.clientY - rect.top - (pendingSticker.height / 2);
+              
+              // Ensure sticker stays within bounds
+              const boundedX = Math.max(0, Math.min(x, wallSize.width - pendingSticker.width));
+              const boundedY = Math.max(0, Math.min(y, wallSize.height - pendingSticker.height));
+              
+              const newSticker = {
+                ...pendingSticker,
+                x: boundedX,
+                y: boundedY,
+              };
+              
+              setImages(prev => [...prev, newSticker]);
+              setSelectedImgId(newSticker.id);
+              window.pendingStickerPlacement = null;
+              
+              // Remove any visual indicators
+              const wall = e.currentTarget;
+              wall.style.cursor = 'default';
+              
+              // Remove preview
+              const preview = document.getElementById('sticker-preview');
+              if (preview) {
+                preview.remove();
+              }
+            }
+          }
+        }}
+        onMouseMove={e => {
+          // Show placement cursor when sticker is ready
+          if (window.pendingStickerPlacement && e.target === e.currentTarget) {
+            e.currentTarget.style.cursor = 'crosshair';
+            
+            // Show preview of sticker placement
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left - (window.pendingStickerPlacement.width / 2);
+            const y = e.clientY - rect.top - (window.pendingStickerPlacement.height / 2);
+            
+            // Update preview position
+            const preview = document.getElementById('sticker-preview');
+            if (preview) {
+              preview.style.left = `${e.clientX - window.pendingStickerPlacement.width / 2}px`;
+              preview.style.top = `${e.clientY - window.pendingStickerPlacement.height / 2}px`;
+            }
           }
         }}
       >
@@ -178,6 +254,24 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
               Close
             </button>
           </div>
+        )}
+        
+        {/* Sticker placement preview */}
+        {window.pendingStickerPlacement && (
+          <div
+            id="sticker-preview"
+            style={{
+              position: 'fixed',
+              width: window.pendingStickerPlacement.width,
+              height: window.pendingStickerPlacement.height,
+              border: '2px dashed #bfa16c',
+              borderRadius: 8,
+              pointerEvents: 'none',
+              zIndex: 1000,
+              opacity: 0.7,
+              background: 'rgba(191, 161, 108, 0.1)',
+            }}
+          />
         )}
       </div>
     </div>

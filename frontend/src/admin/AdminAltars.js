@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../api';
 
 export default function AdminAltars() {
   const [altars, setAltars] = useState([]);
@@ -13,7 +14,7 @@ export default function AdminAltars() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/altars', {
+      const res = await fetch(`${API_BASE}/api/admin/altars`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -40,7 +41,7 @@ export default function AdminAltars() {
     setSelectedAltar(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/altars/${id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/altars/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch altar');
@@ -60,7 +61,7 @@ export default function AdminAltars() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/altars/${editAltar.id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/altars/${editAltar.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: editAltar.name, description: editAltar.description })
@@ -79,7 +80,7 @@ export default function AdminAltars() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/altars/${id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/altars/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

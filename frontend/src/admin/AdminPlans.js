@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../api';
 
-const API_URL = 'http://localhost:5000/api/admin/plans';
+const API_URL = `${API_BASE}/api/admin/plans`;
 
 // Common feature types for plans
 const FEATURE_OPTIONS = [

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { API_BASE } from './api';
 
-const socket = io('http://localhost:5000');
+const socket = io(API_BASE);
 
 export default function ChatPanel({ user }) {
   const [messages, setMessages] = useState([]);

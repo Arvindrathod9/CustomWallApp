@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { toBase64 } from './MainWall';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from './api';
 
 export default function WallDrafts({
   user,
@@ -32,7 +33,7 @@ export default function WallDrafts({
   // API helpers
   const fetchDrafts = async (userid) => {
     const token = localStorage.getItem('token');
-    const res = await axios.get(`http://localhost:5000/api/drafts?userid=${userid}`, {
+    const res = await axios.get(`${API_BASE}/api/drafts?userid=${userid}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
@@ -40,14 +41,14 @@ export default function WallDrafts({
   const saveDraft = async (userid, name, data, id, isPublicVal) => {
     const token = localStorage.getItem('token');
     const payload = id ? { userid, name, data, id, public: isPublicVal } : { userid, name, data, public: isPublicVal };
-    const res = await axios.post('http://localhost:5000/api/drafts', payload, {
+    const res = await axios.post(`${API_BASE}/api/drafts`, payload, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;
   };
   const deleteDraft = async (id) => {
     const token = localStorage.getItem('token');
-    const res = await axios.delete(`http://localhost:5000/api/drafts/${id}`, {
+    const res = await axios.delete(`${API_BASE}/api/drafts/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return res.data;

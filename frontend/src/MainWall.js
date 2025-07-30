@@ -5,6 +5,7 @@ import Wall from './Wall';
 import WallControls from './WallControls';
 import WallDrafts from './WallDrafts';
 import ProfilePanel from './ProfilePanel';
+import { API_BASE } from './api';
 
 const defaultWalls = [
   '/walls/wall1.jpg',
@@ -47,18 +48,18 @@ function MainWall({ user, onLogout, onUserUpdate }) {
     setShowProfile(false);
   }, [location]);
 
-  // Fetch extra stickers for the user
+  // Fetch extra stickers for the user (including plan stickers)
   useEffect(() => {
     async function fetchStickers() {
       if (!user || !user.userid) return;
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:5000/api/user/${user.userid}/stickers`, {
+        const res = await fetch(`${API_BASE}/api/user/${user.userid}/all-stickers`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
           const data = await res.json();
-          setExtraStickers(data);
+          setExtraStickers(data.stickers || data); // Handle both new and old response format
         } else {
           setExtraStickers([]);
         }

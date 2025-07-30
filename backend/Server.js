@@ -1,10 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
 const app = express();
-const PORT = 5000;
+const config = require('./config');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'your_super_secret_key'; // Change this to a strong secret in production
 
 const nodemailer = require('nodemailer');
 const http = require('http');
@@ -32,14 +32,14 @@ io.on('connection', (socket) => {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'memorywall9@gmail.com', // replace with your email
-    pass: 'toii afsh ugjh qqqz' // use an app password, not your real password
+    user: config.EMAIL.user,
+    pass: config.EMAIL.pass
   }
 });
 
 function sendVerificationEmail(to, code) {
   return transporter.sendMail({
-    from: '"MemoryWall" <your_gmail@gmail.com>',
+    from: `"MemoryWall" <${config.EMAIL.user}>`,
     to,
     subject: 'Your MemoryWall Email Verification Code',
     text: `Your verification code is: ${code}`,
@@ -53,10 +53,10 @@ app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 // MySQL connection
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '#arvinD99', // update if you have a password
-  database: 'memorywall'
+  host: config.DB.host,
+  user: config.DB.user,
+  password: config.DB.password,
+  database: config.DB.database
 });
 
 db.connect((err) => {
@@ -73,7 +73,7 @@ function authenticateJWT(req, res, next) {
   if (!authHeader) return res.status(401).json({ error: 'No token provided' });
   const token = authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Malformed token' });
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, config.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid or expired token' });
     // Fetch the latest user role from DB
     db.query('SELECT role FROM users WHERE id = ?', [user.userid], (dbErr, results) => {
@@ -165,7 +165,7 @@ app.post('/api/login', (req, res) => {
     // Return user data
     const user = results[0];
     // Issue JWT
-    const token = jwt.sign({ userid: user.id, username: user.username, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userid: user.id, username: user.username, email: user.email, role: user.role }, config.JWT_SECRET, { expiresIn: '7d' });
     res.json({
       userid: user.id,
       username: user.username,
@@ -367,7 +367,7 @@ app.delete('/api/drafts/:id', authenticateJWT, (req, res) => {
 });
 
 // --- Admin JWT Auth ---
-const ADMIN_JWT_SECRET = 'your_admin_super_secret_key'; // Change in production
+const ADMIN_JWT_SECRET = config.JWT_SECRET; // Use same secret for admin
 const ADMIN_USER = { username: 'Arvind Rathod', password: 'arvind' };
 
 function adminAuthenticateJWT(req, res, next) {
@@ -514,6 +514,18 @@ app.get('/api/admin/analytics/summary', adminAuthenticateJWT, async (req, res) =
   } catch (err) {
     res.status(500).json({ error: 'Database error' });
   }
+});
+
+// Dummy analytics summary endpoint for admin panel
+app.get('/admin/analytics/summary', (req, res) => {
+  res.json({
+    users: 123,
+    walls: 45,
+    stickers: 67,
+    drafts: 12,
+    payments: 34,
+    subscriptions: 56
+  });
 });
 
 // ANALYTICS: Export CSV (users)
@@ -691,6 +703,135 @@ app.get('/api/user/:id/stickers', authenticateJWT, (req, res) => {
   });
 });
 
+// --- Plan Stickers Management ---
+
+// Get stickers assigned to a plan (admin only)
+app.get('/api/admin/plan/:planName/stickers', adminAuthenticateJWT, (req, res) => {
+  const planName = req.params.planName;
+  db.query('SELECT sticker FROM plan_stickers WHERE plan_name = ?', [planName], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    res.json(results.map(r => r.sticker));
+  });
+});
+
+// Assign stickers to a plan (admin only)
+app.post('/api/admin/plan/:planName/stickers', adminAuthenticateJWT, (req, res) => {
+  const planName = req.params.planName;
+  const { stickers } = req.body; // stickers: array of sticker filenames
+  if (!Array.isArray(stickers)) return res.status(400).json({ error: 'Stickers must be an array' });
+  
+  // Remove all current stickers for this plan, then insert new ones
+  db.query('DELETE FROM plan_stickers WHERE plan_name = ?', [planName], (err) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    
+    if (stickers.length === 0) {
+      // If no stickers provided, just return success
+      return res.json({ success: true, message: 'Plan stickers cleared' });
+    }
+    
+    const values = stickers.map(s => [planName, s]);
+    db.query('INSERT INTO plan_stickers (plan_name, sticker) VALUES ?', [values], (err2) => {
+      if (err2) return res.status(500).json({ error: 'Database error' });
+      
+      // Now update all users in this plan to receive these stickers
+      updateUsersInPlanWithStickers(planName, stickers)
+        .then(() => {
+          res.json({ success: true, message: `Stickers assigned to plan ${planName} and all users updated` });
+        })
+        .catch(err3 => {
+          res.status(500).json({ error: 'Failed to update users in plan', details: err3.message });
+        });
+    });
+  });
+});
+
+// Helper function to update all users in a plan with new stickers
+async function updateUsersInPlanWithStickers(planName, stickers) {
+  return new Promise((resolve, reject) => {
+    // First, get all users in this plan
+    db.query('SELECT u.id FROM users u JOIN subscriptions s ON u.id = s.userid WHERE s.plan = ?', [planName], (err, users) => {
+      if (err) return reject(err);
+      
+      if (users.length === 0) {
+        return resolve(); // No users in this plan
+      }
+      
+      // For each user, update their stickers
+      const updatePromises = users.map(user => {
+        return new Promise((resolveUser, rejectUser) => {
+          // Remove existing plan stickers for this user
+          db.query('DELETE FROM user_stickers WHERE user_id = ? AND sticker IN (SELECT sticker FROM plan_stickers WHERE plan_name = ?)', [user.id, planName], (err1) => {
+            if (err1) return rejectUser(err1);
+            
+            // Add new stickers
+            if (stickers.length > 0) {
+              const values = stickers.map(s => [user.id, s]);
+              db.query('INSERT INTO user_stickers (user_id, sticker) VALUES ? ON DUPLICATE KEY UPDATE sticker = sticker', [values], (err2) => {
+                if (err2) return rejectUser(err2);
+                resolveUser();
+              });
+            } else {
+              resolveUser();
+            }
+          });
+        });
+      });
+      
+      Promise.all(updatePromises)
+        .then(() => resolve())
+        .catch(reject);
+    });
+  });
+}
+
+// Get all available plans for sticker assignment
+app.get('/api/admin/plans/list', adminAuthenticateJWT, (req, res) => {
+  db.query('SELECT DISTINCT plan FROM subscriptions UNION SELECT DISTINCT name FROM plans', (err, results) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    const plans = results.map(r => r.plan || r.name).filter(Boolean);
+    res.json(plans);
+  });
+});
+
+// Get user's complete sticker list (including plan stickers)
+app.get('/api/user/:id/all-stickers', authenticateJWT, (req, res) => {
+  const userId = req.params.id;
+  // Only allow the user to fetch their own stickers
+  if (parseInt(userId) !== req.user.userid) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  
+  // Get user's plan
+  db.query('SELECT plan FROM subscriptions WHERE userid = ?', [userId], (err, planResults) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    
+    const userPlan = planResults.length > 0 ? planResults[0].plan : 'basic';
+    
+    // Get individual user stickers
+    db.query('SELECT sticker FROM user_stickers WHERE user_id = ?', [userId], (err2, userStickers) => {
+      if (err2) return res.status(500).json({ error: 'Database error' });
+      
+      // Get plan stickers
+      db.query('SELECT sticker FROM plan_stickers WHERE plan_name = ?', [userPlan], (err3, planStickers) => {
+        if (err3) return res.status(500).json({ error: 'Database error' });
+        
+        // Combine and deduplicate stickers
+        const allStickers = [...new Set([
+          ...userStickers.map(r => r.sticker),
+          ...planStickers.map(r => r.sticker)
+        ])];
+        
+        res.json({
+          stickers: allStickers,
+          userStickers: userStickers.map(r => r.sticker),
+          planStickers: planStickers.map(r => r.sticker),
+          userPlan: userPlan
+        });
+      });
+    });
+  });
+});
+
 // Verify email code endpoint (step 2: move from pending_users to users)
 app.post('/api/verify-email', (req, res) => {
   const { email, code } = req.body;
@@ -714,37 +855,87 @@ app.post('/api/verify-email', (req, res) => {
         [pending.username, pending.password, pending.name, pending.email, pending.country, pending.profile_pic],
         (err3, result) => {
           if (err3) return res.status(500).json({ error: 'Database error' });
+          const userId = result.insertId;
+          
           // Remove from pending_users
           db.query('DELETE FROM pending_users WHERE id = ?', [pending.id]);
-          // Send confirmation email
-          sendVerificationEmailConfirmation(pending.email).catch(() => {});
-          // Issue JWT
-          const token = jwt.sign(
-            { userid: result.insertId, username: pending.username, email: pending.email, role: 'free' },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-          );
-          res.json({
-            success: true,
-            message: 'Email verified and registration complete!',
-            userid: result.insertId,
-            username: pending.username,
-            name: pending.name,
-            email: pending.email,
-            country: pending.country,
-            profile_pic: pending.profile_pic || null,
-            role: 'free',
-            token
-          });
+          
+          // Assign default plan stickers to new user
+          assignPlanStickersToUser(userId, 'basic')
+            .then(() => {
+              // Send confirmation email
+              sendVerificationEmailConfirmation(pending.email).catch(() => {});
+              // Issue JWT
+              const token = jwt.sign(
+                { userid: userId, username: pending.username, email: pending.email, role: 'free' },
+                config.JWT_SECRET,
+                { expiresIn: '7d' }
+              );
+              res.json({
+                success: true,
+                message: 'Email verified and registration complete!',
+                userid: userId,
+                username: pending.username,
+                name: pending.name,
+                email: pending.email,
+                country: pending.country,
+                profile_pic: pending.profile_pic || null,
+                role: 'free',
+                token
+              });
+            })
+            .catch(err4 => {
+              console.error('Failed to assign plan stickers:', err4);
+              // Still complete registration even if sticker assignment fails
+              sendVerificationEmailConfirmation(pending.email).catch(() => {});
+              const token = jwt.sign(
+                { userid: userId, username: pending.username, email: pending.email, role: 'free' },
+                config.JWT_SECRET,
+                { expiresIn: '7d' }
+              );
+              res.json({
+                success: true,
+                message: 'Email verified and registration complete!',
+                userid: userId,
+                username: pending.username,
+                name: pending.name,
+                email: pending.email,
+                country: pending.country,
+                profile_pic: pending.profile_pic || null,
+                role: 'free',
+                token
+              });
+            });
         });
     });
   });
 });
 
+// Helper function to assign plan stickers to a user
+async function assignPlanStickersToUser(userId, planName) {
+  return new Promise((resolve, reject) => {
+    db.query('SELECT sticker FROM plan_stickers WHERE plan_name = ?', [planName], (err, results) => {
+      if (err) return reject(err);
+      
+      if (results.length === 0) {
+        return resolve(); // No stickers for this plan
+      }
+      
+      const stickers = results.map(r => r.sticker);
+      const values = stickers.map(s => [userId, s]);
+      
+      db.query('INSERT INTO user_stickers (user_id, sticker) VALUES ? ON DUPLICATE KEY UPDATE sticker = sticker', [values], (err2) => {
+        if (err2) return reject(err2);
+        resolve();
+      });
+    });
+  });
+}
+
 // Confirmation email sender
 function sendVerificationEmailConfirmation(to) {
   return transporter.sendMail({
-    from: '"MemoryWall" <your_gmail@gmail.com>',
+    from: `"MemoryWall" <${config.EMAIL.user}>`,
     to,
     subject: 'Welcome to MemoryWall! Your Email is Verified',
     html: `
@@ -894,22 +1085,43 @@ app.post('/api/user/upgrade-plan', authenticateJWT, (req, res) => {
   if (!userid || !newPlan) {
     return res.status(400).json({ error: 'userid and newPlan are required' });
   }
+  
   // Update the user's plan in subscriptions table
   db.query('UPDATE subscriptions SET plan = ? WHERE userid = ?', [newPlan, userid], (err, result) => {
     if (err) return res.status(500).json({ error: 'Database error' });
+    
     const updateUserRole = () => {
       db.query('UPDATE users SET role = ? WHERE id = ?', [newPlan.toLowerCase(), userid]);
     };
+    
+    const assignPlanStickers = () => {
+      return assignPlanStickersToUser(userid, newPlan);
+    };
+    
     if (result.affectedRows === 0) {
       // If no subscription, create one
       db.query('INSERT INTO subscriptions (userid, plan, start_date, end_date) VALUES (?, ?, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 YEAR))', [userid, newPlan], (err2) => {
         if (err2) return res.status(500).json({ error: 'Database error' });
         updateUserRole();
-        res.json({ success: true, plan: newPlan });
+        assignPlanStickers()
+          .then(() => {
+            res.json({ success: true, plan: newPlan });
+          })
+          .catch(err3 => {
+            console.error('Failed to assign plan stickers:', err3);
+            res.json({ success: true, plan: newPlan }); // Still return success
+          });
       });
     } else {
       updateUserRole();
-      res.json({ success: true, plan: newPlan });
+      assignPlanStickers()
+        .then(() => {
+          res.json({ success: true, plan: newPlan });
+        })
+        .catch(err3 => {
+          console.error('Failed to assign plan stickers:', err3);
+          res.json({ success: true, plan: newPlan }); // Still return success
+        });
     }
   });
 });
@@ -929,7 +1141,18 @@ app.get('/api/plans', (req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
+server.listen(config.PORT, () => {
+  console.log(`Backend server running on http://localhost:${config.PORT}`);
+  console.log(`Environment: ${config.NODE_ENV}`);
+});
+
+// Dummy analytics roles endpoint for admin panel
+app.get('/admin/analytics/roles', (req, res) => {
+  res.json([
+    { role: 'admin', count: 2 },
+    { role: 'premium', count: 10 },
+    { role: 'advanced', count: 15 },
+    { role: 'basic', count: 50 }
+  ]);
 });
 

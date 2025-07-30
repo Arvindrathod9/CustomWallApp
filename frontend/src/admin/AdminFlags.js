@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../api';
 
 export default function AdminFlags() {
   const [flags, setFlags] = useState([]);
@@ -12,7 +13,7 @@ export default function AdminFlags() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/flags', {
+      const res = await fetch(`${API_BASE}/api/admin/flags`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -43,7 +44,7 @@ export default function AdminFlags() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/flags/${id}/resolve`, {
+      const res = await fetch(`${API_BASE}/api/admin/flags/${id}/resolve`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });

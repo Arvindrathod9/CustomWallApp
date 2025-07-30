@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ReactDOM from 'react-dom';
+import { API_BASE } from './api';
 
-const PLANS_API_URL = 'http://localhost:5000/api/plans';
+const PLANS_API_URL = `${API_BASE}/api/plans`;
 
 const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
   const [profile, setProfile] = useState({
@@ -40,7 +41,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
       const fetchProfile = async () => {
         try {
           const token = localStorage.getItem('token');
-          const res = await axios.get(`http://localhost:5000/api/profile/${user.userid}`, {
+          const res = await axios.get(`${API_BASE}/api/profile/${user.userid}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           console.log('Fetched profile:', res.data); // DEBUG
@@ -101,7 +102,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
         if (!name || !country || !email) {
           try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`http://localhost:5000/api/profile/${user.userid}`, {
+            const res = await axios.get(`${API_BASE}/api/profile/${user.userid}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
             name = res.data.name || '';
@@ -119,7 +120,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
         // Auto-save profile picture
         try {
           const token = localStorage.getItem('token');
-          await axios.put(`http://localhost:5000/api/profile/${user.userid}`, {
+          await axios.put(`${API_BASE}/api/profile/${user.userid}`, {
             name,
             country,
             email,
@@ -143,7 +144,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
     if (!name || !country || !email) {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get(`http://localhost:5000/api/profile/${user.userid}`, {
+        const res = await axios.get(`${API_BASE}/api/profile/${user.userid}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         name = res.data.name || '';
@@ -161,7 +162,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
     // Auto-save removal
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/profile/${user.userid}`, {
+      await axios.put(`${API_BASE}/api/profile/${user.userid}`, {
         name,
         country,
         email,
@@ -180,7 +181,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put(`http://localhost:5000/api/profile/${user.userid}`, {
+      const res = await axios.put(`${API_BASE}/api/profile/${user.userid}`, {
         name: profile.name,
         country: profile.country,
         email: profile.email,
@@ -220,7 +221,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
       return;
     }
     try {
-      const res = await axios.post('http://localhost:5000/api/verify-email', {
+      const res = await axios.post(`${API_BASE}/api/verify-email`, {
         userid: user.userid,
         code: verifyCode
       });
@@ -241,7 +242,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
     setResendMsg('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/resend-verification-code', {
+      const res = await axios.post(`${API_BASE}/api/resend-verification-code`, {
         userid: user.userid,
         email: profile.email
       }, {
@@ -262,7 +263,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
     setUpgradeMsg('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/user/upgrade-plan', {
+      const res = await axios.post(`${API_BASE}/api/user/upgrade-plan`, {
         newPlan: planName
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -270,7 +271,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
       if (res.data.success) {
         setUpgradeMsg(`Successfully upgraded to ${planName}!`);
         // Refetch user profile to update plan and features
-        const profileRes = await axios.get(`http://localhost:5000/api/profile/${user.userid}`, {
+        const profileRes = await axios.get(`${API_BASE}/api/profile/${user.userid}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (profileRes.data) {
@@ -290,7 +291,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
     if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/users/${user.userid}`, {
+      await axios.delete(`${API_BASE}/api/users/${user.userid}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       localStorage.removeItem('token');

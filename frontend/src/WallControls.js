@@ -47,19 +47,23 @@ function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, 
       <StickerSelector
         onStickerSelect={async (src) => {
           const base64 = await toBase64(src);
+          
+          // Create sticker object but don't place it yet
           const newSticker = {
             id: Date.now() + Math.random(),
             src: base64,
-            x: 50,
-            y: 50,
+            x: 0, // Will be set when user clicks on wall
+            y: 0, // Will be set when user clicks on wall
             width: 120,
             height: 120,
             shape: 'rectangle',
             zoom: 1,
             frame: { enabled: false, style: 'black', thickness: 6 },
           };
-          setWallImages(prev => [...prev, newSticker]);
-          setSelectedImgId(newSticker.id);
+          
+          // Store the sticker for placement when user clicks on wall
+          window.pendingStickerPlacement = newSticker;
+          // (No alert)
         }}
         extraStickers={extraStickers}
       />

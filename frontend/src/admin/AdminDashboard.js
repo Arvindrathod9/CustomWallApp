@@ -7,7 +7,8 @@ import AdminFlags from './AdminFlags';
 import AdminSubscriptions from './AdminSubscriptions';
 import AdminPayments from './AdminPayments';
 import AdminPlans from './AdminPlans';
-import { FaUsers, FaChartBar, FaMoneyBill, FaCrown, FaFlag, FaUserShield, FaClipboardList } from 'react-icons/fa';
+import AdminPlanStickers from './AdminPlanStickers';
+import { FaUsers, FaChartBar, FaMoneyBill, FaCrown, FaFlag, FaUserShield, FaClipboardList, FaStickyNote } from 'react-icons/fa';
 
 function AdminNavBar() {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ function AdminNavBar() {
               <button onClick={() => { setMenuOpen(false); navigate('/admin/payments'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Payments</button>
               <button onClick={() => { setMenuOpen(false); navigate('/admin/analytics'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Analytics</button>
               <button onClick={() => { setMenuOpen(false); navigate('/admin/plans'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Plans</button>
+              <button onClick={() => { setMenuOpen(false); navigate('/admin/plan-stickers'); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none' }}>Plan Stickers</button>
               <button onClick={() => { setMenuOpen(false); handleLogout(); }} style={{ fontSize: 22, color: '#bfa16c', background: 'none', border: 'none', marginTop: 24 }}>Logout</button>
               <button onClick={() => setMenuOpen(false)} style={{ position: 'absolute', top: 24, right: 24, fontSize: 32, color: '#bfa16c', background: 'none', border: 'none' }}>&times;</button>
             </div>
@@ -74,6 +76,7 @@ function AdminNavBar() {
           <Link to="/admin/payments" style={{ color: '#bfa16c', textDecoration: 'none', fontWeight: 700, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Payments</Link>
           <Link to="/admin/analytics" style={{ color: '#bfa16c', textDecoration: 'none', fontWeight: 700, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Analytics</Link>
           <Link to="/admin/plans" style={{ color: '#bfa16c', textDecoration: 'none', fontWeight: 700, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Plans</Link>
+          <Link to="/admin/plan-stickers" style={{ color: '#bfa16c', textDecoration: 'none', fontWeight: 700, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Plan Stickers</Link>
           <button onClick={handleLogout} style={{ background: '#bfa16c', color: 'white', border: 'none', borderRadius: 24, padding: '8px 22px', fontWeight: 'bold', cursor: 'pointer', marginLeft: 16, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', boxShadow: '0 1px 6px #bfa16c33' }}>Logout</button>
         </div>
       )}
@@ -90,6 +93,7 @@ function DashboardOverview() {
     { label: 'Analytics', icon: <FaChartBar size={32} color="#2a509c" />, link: '/admin/analytics', color: '#2a509c' },
     { label: 'Flags', icon: <FaFlag size={32} color="#e53935" />, link: '/admin/flags', color: '#e53935' },
     { label: 'Altars', icon: <FaClipboardList size={32} color="#888" />, link: '/admin/altars', color: '#888' },
+    { label: 'Plan Stickers', icon: <FaStickyNote size={32} color="#ff6b35" />, link: '/admin/plan-stickers', color: '#ff6b35' },
     { label: 'Admins', icon: <FaUserShield size={32} color="#2a509c" />, link: '/admin/users', color: '#2a509c' },
   ];
   const navigate = useNavigate();
@@ -146,6 +150,7 @@ export default function AdminDashboard() {
         <Route path="payments" element={<AdminPayments />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="plans" element={<AdminPlans />} />
+        <Route path="plan-stickers" element={<AdminPlanStickers />} />
         <Route path="*" element={<DashboardOverview />} />
       </Routes>
     </div>

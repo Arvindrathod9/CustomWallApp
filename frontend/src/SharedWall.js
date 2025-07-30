@@ -5,6 +5,7 @@ import WallControls from './WallControls';
 import { toBase64 } from './MainWall';
 import NavBar from './NavBar';
 import ProfilePanel from './ProfilePanel';
+import { API_BASE } from './api';
 
 const defaultWalls = [
   '/walls/wall1.jpg',
@@ -44,7 +45,7 @@ export default function SharedWall({ user, onLogout }) {
       setDraft(null);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:5000/api/draft/${id}`, {
+        const res = await fetch(`${API_BASE}/api/draft/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) {
@@ -97,7 +98,7 @@ export default function SharedWall({ user, onLogout }) {
           public: draft.public,
           editors,
         };
-        await fetch('http://localhost:5000/api/drafts', {
+        await fetch(`${API_BASE}/api/drafts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -169,7 +170,7 @@ export default function SharedWall({ user, onLogout }) {
         public: true,
         editors, // Always send the current editors array
       };
-      await fetch('http://localhost:5000/api/drafts', {
+      await fetch(`${API_BASE}/api/drafts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
@@ -244,7 +245,7 @@ export default function SharedWall({ user, onLogout }) {
             if (!newEditor || editors.includes(newEditor)) return;
             setEditorError('');
             try {
-              const res = await fetch(`http://localhost:5000/api/users/exists/${encodeURIComponent(newEditor)}`);
+              const res = await fetch(`${API_BASE}/api/users/exists/${encodeURIComponent(newEditor)}`);
               const data = await res.json();
               if (data.exists) {
                 setEditors([...editors, newEditor]);

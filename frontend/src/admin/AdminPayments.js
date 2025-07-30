@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../api';
 
 export default function AdminPayments() {
   const [payments, setPayments] = useState([]);
@@ -11,7 +12,7 @@ export default function AdminPayments() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/payments', {
+      const res = await fetch(`${API_BASE}/api/admin/payments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) {

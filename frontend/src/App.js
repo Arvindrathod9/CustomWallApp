@@ -9,6 +9,7 @@ import DraftsPage from './DraftsPage';
 import Upgrade from './Upgrade';
 import { jwtDecode } from 'jwt-decode';
 import ChatPanel from './ChatPanel';
+import { API_BASE } from './api';
 
 const AdminDashboard = lazy(() => import('./admin/AdminDashboard'));
 
@@ -53,7 +54,7 @@ function AppRoutes({ user, setUser, users, setUsers }) {
     }
     // Fetch plan features for the user if logged in and not admin
     if (newUser && !newUser.isAdmin && newUser.userid) {
-      fetch(`http://localhost:5000/api/profile/${newUser.userid}`, {
+              fetch(`${API_BASE}/api/profile/${newUser.userid}`, {
         headers: { Authorization: `Bearer ${newUser.token}` }
       })
         .then(res => res.json())
@@ -105,7 +106,11 @@ function AppRoutes({ user, setUser, users, setUsers }) {
       />
       <Route path="/upgrade" element={<Upgrade />} />
       <Route path="/chat" element={<ChatPanel user={user} />} />
-      <Route path="/admin/*" element={isAdminAuthenticated() ? <AdminDashboard /> : <Navigate to="/login" />} />
+      <Route path="/admin/*" element={isAdminAuthenticated() ? (
+        <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '18px', color: '#bfa16c' }}>Loading Admin Dashboard...</div>}>
+          <AdminDashboard />
+        </Suspense>
+      ) : <Navigate to="/login" />} />
       <Route 
         path="*" 
         element={<Navigate to="/home" replace />} 

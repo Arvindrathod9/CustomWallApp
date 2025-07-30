@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaUserFriends } from 'react-icons/fa';
+import { API_BASE } from './api';
 
 function DraftsNavBar() {
   const navigate = useNavigate();
@@ -74,12 +75,12 @@ export default function DraftsPage() {
       try {
         const token = localStorage.getItem('token');
         // Fetch own drafts
-        const res = await axios.get(`http://localhost:5000/api/drafts?userid=${user.userid}`, {
+        const res = await axios.get(`${API_BASE}/api/drafts?userid=${user.userid}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setDrafts(res.data);
         // Fetch drafts shared with user
-        const sharedRes = await axios.get('http://localhost:5000/api/drafts/shared', {
+        const sharedRes = await axios.get(`${API_BASE}/api/drafts/shared`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSharedDrafts(sharedRes.data);
@@ -96,7 +97,7 @@ export default function DraftsPage() {
     if (!window.confirm('Are you sure you want to delete this draft?')) return;
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/drafts/${id}`, {
+      await axios.delete(`${API_BASE}/api/drafts/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDrafts(drafts.filter(d => d.id !== id));
@@ -137,7 +138,7 @@ export default function DraftsPage() {
         data: JSON.stringify(wallState),
         public: true,
       };
-      const res = await axios.post('http://localhost:5000/api/drafts', payload, {
+      const res = await axios.post(`${API_BASE}/api/drafts`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const newId = res.data.id;

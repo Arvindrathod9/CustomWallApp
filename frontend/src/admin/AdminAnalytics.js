@@ -12,6 +12,7 @@ import {
   PointElement,
   LineElement
 } from 'chart.js';
+import { API_BASE } from '../api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
 
@@ -32,34 +33,34 @@ export default function AdminAnalytics() {
       try {
         const token = localStorage.getItem('token');
         // Summary
-        const res = await fetch('http://localhost:5000/api/admin/analytics/summary', {
+        const res = await fetch(`${API_BASE}/api/admin/analytics/summary`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch analytics');
         const data = await res.json();
         setSummary(data);
         // Role breakdown
-        const res2 = await fetch('http://localhost:5000/api/admin/analytics/roles', {
+        const res2 = await fetch(`${API_BASE}/api/admin/analytics/roles`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRoleBreakdown(await res2.json());
         // Country breakdown
-        const res3 = await fetch('http://localhost:5000/api/admin/analytics/countries', {
+        const res3 = await fetch(`${API_BASE}/api/admin/analytics/countries`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCountryBreakdown(await res3.json());
         // Growth
-        const res4 = await fetch('http://localhost:5000/api/admin/analytics/growth', {
+        const res4 = await fetch(`${API_BASE}/api/admin/analytics/growth`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setGrowth(await res4.json());
         // Revenue
-        const res5 = await fetch('http://localhost:5000/api/admin/analytics/revenue', {
+        const res5 = await fetch(`${API_BASE}/api/admin/analytics/revenue`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRevenue(await res5.json());
         // Activity
-        const res6 = await fetch('http://localhost:5000/api/admin/analytics/activity', {
+        const res6 = await fetch(`${API_BASE}/api/admin/analytics/activity`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data6 = await res6.json();

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../api';
 
 export default function AdminSubscriptions() {
   const [subs, setSubs] = useState([]);
@@ -19,7 +20,7 @@ export default function AdminSubscriptions() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/subscriptions', {
+      const res = await fetch(`${API_BASE}/api/admin/subscriptions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch subscriptions');
@@ -35,7 +36,7 @@ export default function AdminSubscriptions() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/users', {
+      const res = await fetch(`${API_BASE}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch users');
@@ -62,7 +63,7 @@ export default function AdminSubscriptions() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/subscriptions', {
+      const res = await fetch(`${API_BASE}/api/admin/subscriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -93,7 +94,7 @@ export default function AdminSubscriptions() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/subscriptions/${editSub.id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/subscriptions/${editSub.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -118,7 +119,7 @@ export default function AdminSubscriptions() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/subscriptions/${sub.id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/subscriptions/${sub.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

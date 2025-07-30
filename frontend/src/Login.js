@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from './api';
 
 function NavBarLogin() {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ export default function Login({ onLogin }) {
       let res, data;
       if (username === 'Arvind Rathod') {
         // Only try admin login for the admin username
-        res = await fetch('http://localhost:5000/api/admin/login', {
+        res = await fetch(`${API_BASE}/api/admin/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -96,7 +97,7 @@ export default function Login({ onLogin }) {
         }
       }
       // Normal user login
-      res = await fetch('http://localhost:5000/api/login', {
+      res = await fetch(`${API_BASE}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

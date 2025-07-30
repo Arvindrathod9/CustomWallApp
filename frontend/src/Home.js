@@ -150,15 +150,21 @@ export default function Home() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32, justifyContent: 'center', marginTop: 24 }}>
             <div style={{ background: '#bfa16c', borderRadius: 16, boxShadow: '0 2px 12px #bfa16c44', padding: 32, minWidth: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>
               <div style={{ fontWeight: 700, color: 'white', fontSize: 18, marginBottom: 8 }}>Email</div>
-              <a href="mailto:memorywall9@gmail.com" style={{ color: 'white', fontSize: 16, textDecoration: 'none', fontWeight: 600 }}>memorywall9@gmail.com</a>
+              <a href={`mailto:${process.env.REACT_APP_CONTACT_EMAIL || 'contact@memorywall9.com'}`} style={{ color: 'white', fontSize: 16, textDecoration: 'none', fontWeight: 600 }}>
+                {process.env.REACT_APP_CONTACT_EMAIL || 'contact@memorywall9.com'}
+              </a>
             </div>
             <div style={{ background: '#bfa16c', borderRadius: 16, boxShadow: '0 2px 12px #bfa16c44', padding: 32, minWidth: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>
               <div style={{ fontWeight: 700, color: 'white', fontSize: 18, marginBottom: 8 }}>Phone</div>
-              <a href="tel:+911234567890" style={{ color: 'white', fontSize: 16, textDecoration: 'none', fontWeight: 600 }}>+91 12345 67890</a>
+              <a href={`tel:${process.env.REACT_APP_CONTACT_PHONE || '+1234567890'}`} style={{ color: 'white', fontSize: 16, textDecoration: 'none', fontWeight: 600 }}>
+                {process.env.REACT_APP_CONTACT_PHONE || '+1234567890'}
+              </a>
             </div>
             <div style={{ background: '#bfa16c', borderRadius: 16, boxShadow: '0 2px 12px #bfa16c44', padding: 32, minWidth: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>
               <div style={{ fontWeight: 700, color: 'white', fontSize: 18, marginBottom: 8 }}>Address</div>
-              <div style={{ color: 'white', fontSize: 16, fontWeight: 600, textAlign: 'center' }}>123 Memory Lane,<br />Remembrance City,<br />India</div>
+              <div style={{ color: 'white', fontSize: 16, fontWeight: 600, textAlign: 'center' }}>
+                {process.env.REACT_APP_CONTACT_ADDRESS || '123 Memory Lane, Remembrance City'}
+              </div>
             </div>
           </div>
           <p style={{ marginTop: 32, color: '#bfa16c', fontWeight: 600, textAlign: 'center' }}>Our team will get back to you as soon as possible!</p>

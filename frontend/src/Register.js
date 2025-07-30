@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './index.css';
+import { API_BASE } from './api';
 
 // Modern NavBar (from Home.js)
 function ModernNavBar() {
@@ -106,7 +107,7 @@ export default function Register({ onRegister }) {
       return;
     }
     try {
-      const res = await fetch('http://localhost:5000/api/register', {
+      const res = await fetch(`${API_BASE}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, name, email, country })
@@ -145,7 +146,7 @@ export default function Register({ onRegister }) {
       return;
     }
     try {
-      const res = await fetch('http://localhost:5000/api/verify-email', {
+      const res = await fetch(`${API_BASE}/api/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail, code: verifyCode })
@@ -172,7 +173,7 @@ export default function Register({ onRegister }) {
   const handleResendCode = async () => {
     setResendMsg('');
     try {
-      const res = await fetch('http://localhost:5000/api/register', {
+      const res = await fetch(`${API_BASE}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: pendingUsername, password, name, email: pendingEmail, country })

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FaUserCircle } from 'react-icons/fa';
+import { API_BASE } from '../api';
 
 const STICKERS = [
   'Wine.png',
@@ -43,7 +44,7 @@ export default function AdminUsers() {
     setSuccess('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/users', {
+      const res = await fetch(`${API_BASE}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch users');
@@ -90,7 +91,7 @@ export default function AdminUsers() {
       for (const userId of selectedIds) {
         const user = users.find(u => u.id === userId);
         if (user.role === 'admin') continue; // skip admin
-        const res = await fetch('http://localhost:5000/api/admin/update-role', {
+        const res = await fetch(`${API_BASE}/api/admin/update-role`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ userId, newRole: bulkRole })
@@ -121,7 +122,7 @@ export default function AdminUsers() {
       for (const userId of selectedIds) {
         const user = users.find(u => u.id === userId);
         if (user.role === 'admin') continue; // skip admin
-        const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+        const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -161,7 +162,7 @@ export default function AdminUsers() {
     setSelectedUser(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+      const res = await fetch(`${API_BASE}/admin/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch user');
@@ -181,7 +182,7 @@ export default function AdminUsers() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/users/${editUser.id}`, {
+      const res = await fetch(`${API_BASE}/admin/users/${editUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: editUser.name, email: editUser.email, country: editUser.country })
@@ -200,7 +201,7 @@ export default function AdminUsers() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+      const res = await fetch(`${API_BASE}/admin/users/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -213,7 +214,7 @@ export default function AdminUsers() {
 
   const handleExport = async () => {
     const token = localStorage.getItem('token');
-    window.open(`http://localhost:5000/api/admin/analytics/export?token=${token}`, '_blank');
+    window.open(`${API_BASE}/admin/analytics/export?token=${token}`, '_blank');
   };
 
   const handleRoleChange = async (userId, newRole) => {
@@ -221,7 +222,7 @@ export default function AdminUsers() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/admin/update-role', {
+      const res = await fetch(`${API_BASE}/admin/update-role`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userId, newRole })
@@ -243,7 +244,7 @@ export default function AdminUsers() {
     if (editUser) {
       setIsLoadingStickers(true);
       const token = localStorage.getItem('token');
-      fetch(`http://localhost:5000/api/admin/user/${editUser.id}/stickers`, {
+      fetch(`${API_BASE}/admin/user/${editUser.id}/stickers`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -259,7 +260,7 @@ export default function AdminUsers() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`http://localhost:5000/api/admin/user/${editUser.id}/stickers`, {
+      const res = await fetch(`${API_BASE}/admin/user/${editUser.id}/stickers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ stickers: editUserStickers })
