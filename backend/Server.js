@@ -52,20 +52,32 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 // MySQL connection
-const db = mysql.createConnection({
-  host: config.DB.host,
-  user: config.DB.user,
-  password: config.DB.password,
-  database: config.DB.database
-});
+let db;
+if (config.DB.host && config.DB.user && config.DB.password && config.DB.database) {
+  db = mysql.createConnection({
+    host: config.DB.host,
+    user: config.DB.user,
+    password: config.DB.password,
+    database: config.DB.database
+  });
 
-db.connect((err) => {
-  if (err) {
-    console.error('MySQL connection error:', err);
-  } else {
-    console.log('Connected to MySQL database');
-  }
-});
+  db.connect((err) => {
+    if (err) {
+      console.error('MySQL connection error:', err);
+    } else {
+      console.log('Connected to MySQL database');
+    }
+  });
+} else {
+  console.log('Database configuration not set. Please configure environment variables.');
+  // Create a mock db object for testing
+  db = {
+    query: (sql, params, callback) => {
+      console.log('Mock database query:', sql);
+      callback(new Error('Database not configured'), null);
+    }
+  };
+}
 
 // Middleware to verify JWT (fetches latest role from DB)
 function authenticateJWT(req, res, next) {

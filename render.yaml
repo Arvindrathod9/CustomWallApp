@@ -15,17 +15,17 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: DB_HOST
-        sync: false
+        value: ""
       - key: DB_USER
-        sync: false
+        value: ""
       - key: DB_PASSWORD
-        sync: false
+        value: ""
       - key: DB_NAME
-        sync: false
+        value: memorywall
       - key: EMAIL_USER
-        sync: false
+        value: ""
       - key: EMAIL_PASS
-        sync: false
+        value: ""
 
   # Frontend React App
   - type: web
@@ -39,8 +39,8 @@ services:
       - key: REACT_APP_API_URL
         value: https://customwall-backend.onrender.com
 
-databases:
-  # MySQL Database
-  - name: customwall-db
-    databaseName: memorywall
-    user: customwall_user 
+# Comment out database for free deployment - use external free database
+# databases:
+#   - name: customwall-db
+#     databaseName: memorywall
+#     user: customwall_user 
