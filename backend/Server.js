@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
+const path = require('path');
 const app = express();
 const config = require('./config');
 const jwt = require('jsonwebtoken');
@@ -50,6 +51,13 @@ function sendVerificationEmail(to, code) {
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
+
+// Serve static files from the React build
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// Serve static files for walls and stickers
+app.use('/walls', express.static(path.join(__dirname, '../frontend/build/walls')));
+app.use('/stickers', express.static(path.join(__dirname, '../frontend/build/stickers')));
 
 // MySQL connection
 const db = mysql.createConnection({
@@ -1141,9 +1149,20 @@ app.get('/api/plans', (req, res) => {
   });
 });
 
+// Catch-all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  // Don't serve React app for API routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/admin/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+});
+
 server.listen(config.PORT, () => {
   console.log(`Backend server running on http://localhost:${config.PORT}`);
   console.log(`Environment: ${config.NODE_ENV}`);
+  console.log(`Frontend served from: ${path.join(__dirname, '../frontend/build')}`);
 });
 
 // Dummy analytics roles endpoint for admin panel
