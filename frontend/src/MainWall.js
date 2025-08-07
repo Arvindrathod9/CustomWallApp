@@ -121,11 +121,14 @@ function MainWall({ user, onLogout, onUserUpdate }) {
   // Wall image controls (for images placed on the wall)
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
+    // Center images by default
+    const centerX = Math.max(0, Math.floor((width - 150) / 2));
+    const centerY = Math.max(0, Math.floor((height - 150) / 2));
     const newImages = await Promise.all(files.map(async (file, index) => ({
-      id: Date.now() + index,
+      id: Date.now() + index + Math.random(),
       src: await toBase64(file),
-      x: 0,
-      y: 0,
+      x: centerX,
+      y: centerY,
       width: 150,
       height: 150,
       shape: 'rectangle',
