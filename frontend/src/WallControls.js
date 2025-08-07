@@ -12,15 +12,7 @@ function WallControls({ showColorPicker, handleColorButtonClick, selectedColor, 
   const isMobile = window.innerWidth <= 700;
   return (
     <div style={{ minWidth: 220, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, marginTop: 40, background: 'rgba(255,255,255,0.55)', borderRadius: 18, boxShadow: '0 2px 16px #bfa16c11', padding: '24px 18px', backdropFilter: 'blur(6px)', width: isMobile ? '100vw' : 220 }}>
-      {/* Background color picker toggle */}
-      {!isMobile && (
-        <button
-          style={{ background: '#bfa16c', color: 'white', fontWeight: 'bold', padding: '10px 24px', borderRadius: 18, fontSize: 18, width: 200, marginBottom: 8, boxShadow: '0 1px 6px #bfa16c33', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', cursor: 'pointer' }}
-          onClick={handleColorButtonClick}
-        >
-          Choose Background Color
-        </button>
-      )}
+      {/* Removed desktop background color picker button as requested */}
       {showColorPicker && isMobile && (
         <div style={{ position: 'fixed', left: 0, bottom: 0, width: '100vw', background: 'rgba(255,255,255,0.98)', zIndex: 99999, boxShadow: '0 -2px 16px #bfa16c33', padding: 12, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <ChromePicker color={selectedColor} onChange={handleColorChange} disableAlpha={true} style={{ width: '100vw', maxWidth: 340 }} />
