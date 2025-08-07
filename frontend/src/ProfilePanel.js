@@ -66,7 +66,7 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
     }
   }, [user, isOpen]);
 
-  // Fetch all plans for upgrade options
+  // Fetch all plans for upgrade options, fallback to default if API fails
   useEffect(() => {
     async function fetchPlans() {
       setPlansLoading(true);
@@ -76,9 +76,77 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
         const res = await axios.get(PLANS_API_URL, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setPlans(res.data);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setPlans(res.data);
+        } else {
+          setPlans([
+            {
+              id: 1,
+              name: 'Free',
+              price: 0,
+              features: [
+                { id: 1, feature_label: 'Basic Access', feature_key: 'basic', feature_value: 'true' },
+                { id: 2, feature_label: 'Limited Stickers', feature_key: 'stickers', feature_value: '10' }
+              ]
+            },
+            {
+              id: 2,
+              name: 'Advanced',
+              price: 199,
+              features: [
+                { id: 3, feature_label: 'All Free Features', feature_key: 'basic', feature_value: 'true' },
+                { id: 4, feature_label: 'More Stickers', feature_key: 'stickers', feature_value: '50' },
+                { id: 5, feature_label: 'Share Walls', feature_key: 'share', feature_value: 'true' }
+              ]
+            },
+            {
+              id: 3,
+              name: 'Premium',
+              price: 499,
+              features: [
+                { id: 6, feature_label: 'All Advanced Features', feature_key: 'basic', feature_value: 'true' },
+                { id: 7, feature_label: 'Unlimited Stickers', feature_key: 'stickers', feature_value: 'Unlimited' },
+                { id: 8, feature_label: 'Ultra HD Walls', feature_key: 'ultra', feature_value: 'true' },
+                { id: 9, feature_label: 'Priority Support', feature_key: 'support', feature_value: 'true' }
+              ]
+            }
+          ]);
+          setPlansError('No plans found from server. Showing default plans.');
+        }
       } catch (e) {
-        setPlansError('Failed to load plans');
+        setPlansError('Failed to load plans from server. Showing default plans.');
+        setPlans([
+          {
+            id: 1,
+            name: 'Free',
+            price: 0,
+            features: [
+              { id: 1, feature_label: 'Basic Access', feature_key: 'basic', feature_value: 'true' },
+              { id: 2, feature_label: 'Limited Stickers', feature_key: 'stickers', feature_value: '10' }
+            ]
+          },
+          {
+            id: 2,
+            name: 'Advanced',
+            price: 199,
+            features: [
+              { id: 3, feature_label: 'All Free Features', feature_key: 'basic', feature_value: 'true' },
+              { id: 4, feature_label: 'More Stickers', feature_key: 'stickers', feature_value: '50' },
+              { id: 5, feature_label: 'Share Walls', feature_key: 'share', feature_value: 'true' }
+            ]
+          },
+          {
+            id: 3,
+            name: 'Premium',
+            price: 499,
+            features: [
+              { id: 6, feature_label: 'All Advanced Features', feature_key: 'basic', feature_value: 'true' },
+              { id: 7, feature_label: 'Unlimited Stickers', feature_key: 'stickers', feature_value: 'Unlimited' },
+              { id: 8, feature_label: 'Ultra HD Walls', feature_key: 'ultra', feature_value: 'true' },
+              { id: 9, feature_label: 'Priority Support', feature_key: 'support', feature_value: 'true' }
+            ]
+          }
+        ]);
       }
       setPlansLoading(false);
     }
@@ -713,41 +781,50 @@ const ProfilePanel = ({ user, isOpen, onClose, onUpdateUser }) => {
               {user?.plan ? user.plan : 'No plan'}
             </div>
             <h4 style={{ color: '#bfa16c', fontWeight: 700, fontSize: 18, marginBottom: 8, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }}>Available Plans</h4>
-            {plansLoading ? <div>Loading plans...</div> : plansError ? <div style={{ color: 'red' }}>{plansError}</div> : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {plans.map(plan => (
-                  <div key={plan.id} style={{
-                    background: user?.plan === plan.name ? 'rgba(123,47,242,0.08)' : 'rgba(255,255,255,0.85)',
-                    border: user?.plan === plan.name ? '2.5px solid #7b2ff2' : '2px solid #bfa16c',
-                    borderRadius: 16,
-                    boxShadow: '0 2px 12px #bfa16c11',
-                    padding: 18,
-                    marginBottom: 4,
-                    fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif',
-                    opacity: user?.plan === plan.name ? 1 : 0.95
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ fontWeight: 900, fontSize: 20, color: user?.plan === plan.name ? '#7b2ff2' : '#bfa16c' }}>{plan.name}</div>
-                      <div style={{ color: '#bfa16c', fontWeight: 'bold', fontSize: 18 }}>₹{plan.price}</div>
-                    </div>
-                    <ul style={{ margin: '10px 0 0 18px', color: '#555', fontSize: 15 }}>
-                      {plan.features.map(f => (
-                        <li key={f.id}><b>{f.feature_label}:</b> {f.feature_key === 'share' || f.feature_key === 'ultra' ? (f.feature_value === 'true' ? 'Enabled' : 'Disabled') : f.feature_value}</li>
-                      ))}
-                    </ul>
-                    {user?.plan === plan.name ? (
-                      <div style={{ color: '#1e7b2a', fontWeight: 700, marginTop: 8 }}>Current Plan</div>
-                    ) : (
-                      <button
-                        style={{ background: '#7b2ff2', color: 'white', border: 'none', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontSize: 16, marginTop: 12, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', boxShadow: '0 1px 6px #7b2ff233', cursor: 'pointer' }}
-                        onClick={() => handleUpgrade(plan.name)}
-                      >
-                        Upgrade to {plan.name}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
+            {plansLoading ? (
+              <div>Loading plans...</div>
+            ) : (
+              <>
+                {plansError && <div style={{ color: 'red', marginBottom: 8 }}>{plansError}</div>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {plans.length === 0 ? (
+                    <div style={{ color: 'red' }}>No plans available.</div>
+                  ) : (
+                    plans.map(plan => (
+                      <div key={plan.id} style={{
+                        background: user?.plan === plan.name ? 'rgba(123,47,242,0.08)' : 'rgba(255,255,255,0.85)',
+                        border: user?.plan === plan.name ? '2.5px solid #7b2ff2' : '2px solid #bfa16c',
+                        borderRadius: 16,
+                        boxShadow: '0 2px 12px #bfa16c11',
+                        padding: 18,
+                        marginBottom: 4,
+                        fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif',
+                        opacity: user?.plan === plan.name ? 1 : 0.95
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ fontWeight: 900, fontSize: 20, color: user?.plan === plan.name ? '#7b2ff2' : '#bfa16c' }}>{plan.name}</div>
+                          <div style={{ color: '#bfa16c', fontWeight: 'bold', fontSize: 18 }}>₹{plan.price}</div>
+                        </div>
+                        <ul style={{ margin: '10px 0 0 18px', color: '#555', fontSize: 15 }}>
+                          {plan.features.map(f => (
+                            <li key={f.id}><b>{f.feature_label}:</b> {f.feature_key === 'share' || f.feature_key === 'ultra' ? (f.feature_value === 'true' ? 'Enabled' : 'Disabled') : f.feature_value}</li>
+                          ))}
+                        </ul>
+                        {user?.plan === plan.name ? (
+                          <div style={{ color: '#1e7b2a', fontWeight: 700, marginTop: 8 }}>Current Plan</div>
+                        ) : (
+                          <button
+                            style={{ background: '#7b2ff2', color: 'white', border: 'none', borderRadius: 18, padding: '8px 22px', fontWeight: 'bold', fontSize: 16, marginTop: 12, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', boxShadow: '0 1px 6px #7b2ff233', cursor: 'pointer' }}
+                            onClick={() => handleUpgrade(plan.name)}
+                          >
+                            Upgrade to {plan.name}
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
             )}
             {upgradeMsg && <div style={{ color: '#2a509c', fontWeight: 600, marginTop: 12 }}>{upgradeMsg}</div>}
           </div>

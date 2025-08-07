@@ -149,6 +149,7 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
       >
         {/* Display uploaded image if present */}
         {images.map((img) => {
+          console.log('Rendering Rnd', img.id, 'at', img.x, img.y);
           const maskStyle = getMaskStyle(img.shape);
           const isPolygonShape = img.shape === 'triangle' || img.shape === 'heart';
           const frameColor =
@@ -159,31 +160,45 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
           return (
             <Rnd
               key={img.id}
-              size={{ width: img.width, height: img.height }}
               position={{ x: img.x, y: img.y }}
+              size={{ width: img.width, height: img.height }}
               onDragStop={(e, d) => {
-                setImages(prev =>
-                  prev.map(i =>
-                    i.id === img.id ? { ...i, x: d.x, y: d.y } : i
-                  )
-                );
-                console.log('Dragged image', img.id, 'to', d.x, d.y);
+                // DEBUG: Log drag event values
+                console.log('onDragStop event:', { d, img, images });
+                // Ensure the image stays within bounds
+                const boundedX = Math.max(0, Math.min(d.x, wallSize.width - img.width));
+                const boundedY = Math.max(0, Math.min(d.y, wallSize.height - img.height));
+                setImages(prev => {
+                  const updated = prev.map(i =>
+                    i.id === img.id ? { ...i, x: boundedX, y: boundedY } : i
+                  );
+                  // DEBUG: Log updated images array
+                  console.log('Updated images after drag:', updated);
+                  return updated;
+                });
+                console.log('Dragged image', img.id, 'to', boundedX, boundedY);
               }}
               onResizeStop={(e, direction, ref, delta, position) => {
+                // Ensure the resized image stays within bounds
+                const newWidth = parseInt(ref.style.width, 10);
+                const newHeight = parseInt(ref.style.height, 10);
+                const boundedX = Math.max(0, Math.min(position.x, wallSize.width - newWidth));
+                const boundedY = Math.max(0, Math.min(position.y, wallSize.height - newHeight));
+                
                 setImages(prev =>
                   prev.map(i =>
                     i.id === img.id
                       ? {
                           ...i,
-                          width: parseInt(ref.style.width, 10),
-                          height: parseInt(ref.style.height, 10),
-                          x: position.x,
-                          y: position.y,
+                          width: newWidth,
+                          height: newHeight,
+                          x: boundedX,
+                          y: boundedY,
                         }
                       : i
                   )
                 );
-                console.log('Resized image', img.id, 'to', ref.style.width, ref.style.height, 'at', position.x, position.y);
+                console.log('Resized image', img.id, 'to', newWidth, newHeight, 'at', boundedX, boundedY);
               }}
               bounds="parent"
               minWidth={50}
@@ -212,13 +227,24 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
                     : 'none',
                   outlineOffset: isPolygonShape && img.frame?.enabled ? '-2px' : undefined,
                 }}
-                onMouseDown={() => {
-                  handleSelectImage(img.id);
-                  setImages(prev =>
-                    prev.map(i =>
-                      i.id === img.id ? { ...i, locked: false } : i
-                    )
-                  );
+                onClick={(e) => {
+                  // Only handle left click for selection
+                  if (e.button === 0) {
+                    handleSelectImage(img.id);
+                    // Don't modify locked state on every click
+                    if (img.locked) {
+                      setImages(prev =>
+                        prev.map(i =>
+                          i.id === img.id ? { ...i, locked: false } : i
+                        )
+                      );
+                    }
+                  }
+                }}
+                onContextMenu={(e) => {
+                  // Prevent right-click context menu from interfering
+                  e.preventDefault();
+                  e.stopPropagation();
                 }}
               >
                 <img
@@ -235,6 +261,11 @@ const Wall = ({ wallBg, wallSize, wallRef, images, setImages, selectedImgId, set
                     ...maskStyle,
                   }}
                   onWheel={(e) => handleWheel(e, img.id)}
+                  onContextMenu={(e) => {
+                    // Prevent right-click on image as well
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
                 />
               </div>
             </Rnd>

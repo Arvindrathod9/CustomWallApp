@@ -43,6 +43,9 @@ function MainWall({ user, onLogout, onUserUpdate }) {
   const [controlsOpen, setControlsOpen] = useState(false);
   const isMobile = window.innerWidth <= 700;
 
+  // DEBUG: Log wallImages on every render
+  console.log('DEBUG: wallImages', wallImages);
+
   // Automatically close ProfilePanel on route change (browser back/forward)
   useEffect(() => {
     setShowProfile(false);

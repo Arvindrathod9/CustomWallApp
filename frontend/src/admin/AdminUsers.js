@@ -19,7 +19,7 @@ const STICKERS = [
 
 const PREMIUM_STICKERS = [
   'premium1.png',
-  'premimum2.png',
+  'premium2.png', // fixed typo
   'premium3.png',
 ];
 
@@ -162,7 +162,7 @@ export default function AdminUsers() {
     setSelectedUser(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to fetch user');
@@ -182,7 +182,7 @@ export default function AdminUsers() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/admin/users/${editUser.id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/users/${editUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: editUser.name, email: editUser.email, country: editUser.country })
@@ -201,7 +201,7 @@ export default function AdminUsers() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/admin/users/${id}`, {
+      const res = await fetch(`${API_BASE}/api/admin/users/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -222,7 +222,7 @@ export default function AdminUsers() {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/admin/update-role`, {
+      const res = await fetch(`${API_BASE}/api/admin/update-role`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ userId, newRole })
@@ -248,7 +248,10 @@ export default function AdminUsers() {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
-        .then(data => setEditUserStickers(data))
+        .then(data => {
+          if (Array.isArray(data)) setEditUserStickers(data);
+          else setEditUserStickers([]);
+        })
         .catch(() => setEditUserStickers([]))
         .finally(() => setIsLoadingStickers(false));
     }
@@ -403,15 +406,15 @@ export default function AdminUsers() {
             <h3 style={{ color: '#bfa16c' }}>Edit User</h3>
             <div style={{ marginBottom: 12 }}>
               <label>Name:</label>
-              <input type="text" value={editUser.name} onChange={e => setEditUser({ ...editUser, name: e.target.value })} style={{ width: '100%', padding: 8, borderRadius: 12, border: '1.5px solid #bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }} />
+              <input type="text" value={editUser.name || ''} onChange={e => setEditUser({ ...editUser, name: e.target.value })} style={{ width: '100%', padding: 8, borderRadius: 12, border: '1.5px solid #bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label>Email:</label>
-              <input type="email" value={editUser.email} onChange={e => setEditUser({ ...editUser, email: e.target.value })} style={{ width: '100%', padding: 8, borderRadius: 12, border: '1.5px solid #bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }} />
+              <input type="email" value={editUser.email || ''} onChange={e => setEditUser({ ...editUser, email: e.target.value })} style={{ width: '100%', padding: 8, borderRadius: 12, border: '1.5px solid #bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label>Country:</label>
-              <input type="text" value={editUser.country} onChange={e => setEditUser({ ...editUser, country: e.target.value })} style={{ width: '100%', padding: 8, borderRadius: 12, border: '1.5px solid #bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }} />
+              <input type="text" value={editUser.country || ''} onChange={e => setEditUser({ ...editUser, country: e.target.value })} style={{ width: '100%', padding: 8, borderRadius: 12, border: '1.5px solid #bfa16c', fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif' }} />
             </div>
             <div style={{ marginBottom: 12 }}>
               <label>Role:</label>

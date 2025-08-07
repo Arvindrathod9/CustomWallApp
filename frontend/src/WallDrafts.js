@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toBase64 } from './MainWall';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ export default function WallDrafts({
   const [isPublic, setIsPublic] = useState(true); // Default to public
   const [shareLink, setShareLink] = useState('');
   const navigate = useNavigate();
+  const lastSavedState = useRef(null);
 
   // Role-based feature restriction
   const canShareOrSave = user && (user.isAdmin || ['advanced', 'premium', 'admin'].includes(user.role));
@@ -109,6 +110,26 @@ export default function WallDrafts({
     setShareLink(url);
     alert('Share link copied to clipboard!');
   };
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (!currentDraftId || !user || !user.userid) return;
+    let isMounted = true;
+    const saveIfChanged = async () => {
+      const wallData = await getWallDraftData();
+      if (lastSavedState.current !== wallData) {
+        lastSavedState.current = wallData;
+        try {
+          await saveDraft(user.userid, 'Draft', wallData, currentDraftId, true);
+          // Optionally: show a "Saved" indicator here
+        } catch (e) {
+          // Optionally: handle save error
+        }
+      }
+    };
+    const timeout = setTimeout(() => { if (isMounted) saveIfChanged(); }, 1000);
+    return () => { isMounted = false; clearTimeout(timeout); };
+  }, [wallState, currentDraftId, user]);
 
   return (
     <div style={{ marginTop: 16 }}>

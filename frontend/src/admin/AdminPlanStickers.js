@@ -43,20 +43,43 @@ export default function AdminPlanStickers() {
       const res = await fetch(`${API_BASE}/api/admin/plans/list`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error('Failed to fetch plans');
-      const data = await res.json();
-      setPlans(data);
-      
-      // Get user counts for each plan
+      let data = [];
+      if (res.ok) {
+        data = await res.json();
+      }
+      // Default plans
+      const defaultPlans = ['Free', 'Advanced', 'Premium'];
+      // Merge API plans with defaults, case-insensitive, unique
+      const mergedPlans = Array.from(new Set([...data.map(p => (typeof p === 'string' ? p : p.name || p)), ...defaultPlans]));
+      setPlans(mergedPlans);
+      // Get all users once, then count per plan
       const userCountsData = {};
-      for (const plan of data) {
-        const countRes = await fetch(`${API_BASE}/api/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (countRes.ok) {
-          const users = await countRes.json();
-          userCountsData[plan] = users.filter(u => u.subscription_plan === plan).length;
-        }
+      const usersRes = await fetch(`${API_BASE}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      let users = [];
+      if (usersRes.ok) {
+        users = await usersRes.json();
+      }
+      for (const plan of mergedPlans) {
+        // Accept both plan name and role fields, and handle common variants
+        const planLower = plan.toLowerCase();
+        userCountsData[plan] = users.filter(u => {
+          const planField = (u.subscription_plan || '').toLowerCase();
+          const roleField = (u.role || '').toLowerCase();
+          // Accept 'free' for 'free', 'basic', etc.
+          if (planLower === 'free') {
+            return planField === 'free' || planField === 'basic' || roleField === 'free' || roleField === 'basic';
+          }
+          if (planLower === 'advanced') {
+            return planField === 'advanced' || roleField === 'advanced';
+          }
+          if (planLower === 'premium') {
+            return planField === 'premium' || roleField === 'premium';
+          }
+          // fallback: match by plan name
+          return planField === planLower || roleField === planLower;
+        }).length;
       }
       setUserCounts(userCountsData);
     } catch (e) {
